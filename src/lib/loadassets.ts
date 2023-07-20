@@ -2,15 +2,18 @@ import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { open } from "@tauri-apps/api/dialog";
 import { readDir } from "@tauri-apps/api/fs";
 import type { FileEntry } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api";
+
+
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp"]
 
 export async function openImageDialogue() {
   const file = (await open({
-    defaultPath: "~/videos",
     multiple: false,
     filters: [
       {
-        name: "Video",
-        extensions: ["png", "jpg", "jpeg"],
+        name: "Images",
+        extensions: IMAGE_EXTENSIONS,
       },
     ],
   })) as string;
@@ -36,10 +39,13 @@ export async function readDirImages(dirPath: string) {
   const entries: FileEntry[] = await readDir(dirPath);
   // console.log(`Read entries from ${dirPath}`, entries);
   return processEntries(await entries).filter(
-    (entry) => [".png", ".jpg", ".jpeg", ".gif", ".webp"].some((ext) => entry.name.endsWith(ext))
+    (entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext))
   ).reverse();
 }
 
+export async function readParameters(src: string) {
+  return await invoke<string>("read_parameters", { src });
+}
 
 
 

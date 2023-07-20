@@ -87,6 +87,7 @@
       <ImageSquare
         src={image.url}
         alt={image.name}
+        path={image.path}
         on:expand={expandImage}
         on:select={selectImage}
       />
@@ -95,7 +96,12 @@
 </main>
 
 {#if expanded}
-  <ImageModal src={expanded?.src} alt={expanded?.alt} on:close={expandImage} />
+  <ImageModal
+    src={expanded?.src}
+    alt={expanded?.alt}
+    path={expanded?.path}
+    on:close={expandImage}
+  />
 {/if}
 
 <style>

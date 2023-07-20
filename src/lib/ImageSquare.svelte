@@ -4,17 +4,18 @@
     const dispatch = createEventDispatcher();
 
     export let src: string = "";
+    export let path: string = "";
     export let alt: string = "";
     export let tabindex: number = 0;
 
     export let onClick = () => {
         // openImageDialogue();
-        dispatch("select", { src, alt });
+        dispatch("select", { src, alt, path });
     };
 
     const keyPressed = (event) => {
         if (event.key === "Enter") {
-            dispatch("expand", { src, alt });
+            dispatch("expand", { src, alt, path });
         }
     };
 </script>
@@ -26,11 +27,11 @@
     on:keydown={keyPressed}
     {tabindex}
     on:focus={() => {
-        dispatch("select", { src, alt });
+        dispatch("select", { src, alt, path });
     }}
 >
-    <div class="expand" on:click={() => dispatch("expand", { src, alt })}>
-        <FaExpand class="icon" />
+    <div class="expand" on:click={() => dispatch("expand", { src, alt, path })}>
+        <FaExpand />
     </div>
 
     <img {src} {alt} />
@@ -82,10 +83,5 @@
 
     .expand:hover {
         background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .FaExpand .icon {
-        width: 100%;
-        height: 100%;
     }
 </style>
