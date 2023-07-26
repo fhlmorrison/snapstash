@@ -13,23 +13,30 @@
   let imgUrl: string = "";
   let imageFiles: FileEntry[] = [];
   // $: console.log(imageFiles);
-  let imageUrls: (FileEntry & { url: string })[] = [];
-  let expanded: ImageInfo | null;
-  let selected: ImageInfo | null;
+  let imageUrls: ImageInfo[] = [];
 
-  const expandImage = (event: CustomEvent<ImageInfo>) => {
-    expanded = event.detail;
+  let selectedIndex = 0;
+
+  let selected: ImageInfo | null;
+  let expanded: boolean;
+
+  $: selected = imageUrls[selectedIndex] || null;
+
+  const expandImage = (event: CustomEvent<number>) => {
+    selectedIndex = event.detail;
+    expanded = !expanded;
   };
 
-  const selectImage = (event: CustomEvent<ImageInfo>) => {
-    selected = event.detail;
+  const selectImage = (event: CustomEvent<number>) => {
+    selectedIndex = event.detail;
   };
 
   const openImages = async (files: FileEntry[]) => {
     imageUrls = await Promise.all(
       imageFiles.map(async (file) => ({
-        ...file,
-        url: await openImage(file.path),
+        path: file.path,
+        name: file.name,
+        src: await openImage(file.path),
       }))
     );
   };
@@ -74,7 +81,7 @@
       </div>
       <ImageSquare
         src={imgUrl}
-        alt="image"
+        name="image"
         on:expand={(image) => {
           expanded = image.detail;
         }}
@@ -83,10 +90,11 @@
   {/if}
 
   <div class="image-grid">
-    {#each imageUrls as image}
+    {#each imageUrls as image, index}
       <ImageSquare
-        src={image.url}
-        alt={image.name}
+        {index}
+        src={image.src}
+        name={image.name}
         path={image.path}
         on:expand={expandImage}
         on:select={selectImage}
@@ -97,10 +105,16 @@
 
 {#if expanded}
   <ImageModal
-    src={expanded?.src}
-    alt={expanded?.alt}
-    path={expanded?.path}
+    src={selected?.src}
+    alt={selected?.name}
+    path={selected?.path}
     on:close={expandImage}
+    on:next={() => {
+      selectedIndex = (selectedIndex + 1) % imageUrls.length;
+    }}
+    on:prev={() => {
+      selectedIndex = (selectedIndex - 1 + imageUrls.length) % imageUrls.length;
+    }}
   />
 {/if}
 

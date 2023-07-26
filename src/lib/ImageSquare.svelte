@@ -5,17 +5,20 @@
 
     export let src: string = "";
     export let path: string = "";
-    export let alt: string = "";
+    export let name: string = "";
     export let tabindex: number = 0;
+    export let index: number = 0;
 
     export let onClick = () => {
         // openImageDialogue();
-        dispatch("select", { src, alt, path });
+        dispatch("select", index);
     };
+
+    const expand = () => dispatch("expand", index);
 
     const keyPressed = (event) => {
         if (event.key === "Enter") {
-            dispatch("expand", { src, alt, path });
+            expand();
         }
     };
 </script>
@@ -27,14 +30,14 @@
     on:keydown={keyPressed}
     {tabindex}
     on:focus={() => {
-        dispatch("select", { src, alt, path });
+        dispatch("select", index);
     }}
 >
-    <div class="expand" on:click={() => dispatch("expand", { src, alt, path })}>
+    <div class="expand" on:click={expand}>
         <FaExpand />
     </div>
 
-    <img {src} {alt} />
+    <img {src} alt={name} />
 </div>
 
 <style>

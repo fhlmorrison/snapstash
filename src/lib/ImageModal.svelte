@@ -22,25 +22,45 @@
         dispatch("close", null);
     };
 
+    const next = () => {
+        dispatch("next", null);
+    };
+
+    const prev = () => {
+        dispatch("prev", null);
+    };
+
     const keyPressed = (event) => {
-        if (event.key === "Escape") {
-            closeModal();
+        switch (event.key) {
+            case "Escape":
+                closeModal();
+                break;
+            case "ArrowRight":
+                next();
+                break;
+            case "ArrowLeft":
+                prev();
+                break;
         }
     };
 </script>
 
-<div
-    bind:this={modal}
-    class="modal"
-    role="button"
-    on:click={closeModal}
-    on:keydown={keyPressed}
-    tabindex={0}
-/>
-<img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
-<div class="text-box">
-    <h2>{alt}</h2>
-    <div>{parameterText}</div>
+<div on:keydown={keyPressed} tabindex="-1">
+    <div
+        bind:this={modal}
+        class="modal"
+        role="button"
+        on:click={closeModal}
+        tabindex={0}
+        on:keydown={keyPressed}
+    />
+    <img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
+    <button class="prev" on:click={prev}>&lt</button>
+    <button class="next" on:click={next}>&gt</button>
+    <div class="text-box">
+        <h2>{alt}</h2>
+        <div>{parameterText}</div>
+    </div>
 </div>
 
 <style>
@@ -71,5 +91,38 @@
         padding: 1em;
         z-index: 2;
         color: #fff;
+    }
+
+    .next,
+    .prev {
+        position: fixed;
+        top: 0;
+        z-index: 2;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        width: clamp(10%, 100px, 20%);
+    }
+
+    .next:hover,
+    .prev:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    button {
+        background-color: transparent;
+        border: none;
+        color: #fff;
+        font-size: 2em;
+        cursor: pointer;
+    }
+
+    .next {
+        right: 0;
+        padding-right: 5px;
+    }
+    .prev {
+        left: 0;
+        padding-left: 5px;
     }
 </style>

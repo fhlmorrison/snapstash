@@ -1,1 +1,1 @@
-export type ImageInfo = { src: string; alt: string; path: string; };
+export type ImageInfo = { src: string; name: string; path: string; };

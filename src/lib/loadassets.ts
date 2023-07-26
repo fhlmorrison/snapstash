@@ -44,7 +44,13 @@ export async function readDirImages(dirPath: string) {
 }
 
 export async function readParameters(src: string) {
-  return await invoke<string>("read_parameters", { src });
+  try {
+    return await invoke<string>("read_parameters", { src });
+
+  }
+  catch (e) {
+    console.log("Error reading parameters: ", e);
+  }
 }
 
 
