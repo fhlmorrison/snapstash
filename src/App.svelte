@@ -7,6 +7,7 @@
     openImageDialogue,
     openDirectory,
     readDirImages,
+    saveImages,
   } from "./lib/loadassets";
   import type { ImageInfo } from "./lib/types";
 
@@ -49,6 +50,10 @@
   const getDir = async () => {
     imageFiles = await readDirImages(await openDirectory());
   };
+
+  const save = async () => {
+    await saveImages(imageFiles.map((file) => file.path));
+  };
 </script>
 
 <main class="container">
@@ -62,6 +67,7 @@
       }}
       >Close Directory
     </button>
+    <button class="save-button" on:click={save}> Save Images </button>
   {/if}
 
   {#if imgUrl}

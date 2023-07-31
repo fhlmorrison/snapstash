@@ -53,6 +53,15 @@ export async function readParameters(src: string) {
   }
 }
 
+export async function saveImages(images: string[]) {
+  try {
+    return await invoke<string>("save_images", { images });
+
+  }
+  catch (e) {
+    console.log("Error saving images: ", e);
+  }
+}
 
 
 // Mutual recursion for processing nested directories

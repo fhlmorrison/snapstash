@@ -1,8 +1,20 @@
 use rusqlite::{Connection, Result};
+use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
 pub struct AppState {
     pub db: std::sync::Mutex<Option<Connection>>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Image {
+    pub path: String,
+    pub params: Option<String>,
+}
+pub struct DbImage {
+    pub id: i32,
+    pub path: String,
+    pub params: Option<String>,
 }
 
 pub fn init_db(handle: &AppHandle) -> Result<Connection> {
@@ -26,7 +38,7 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
         "CREATE TABLE IF NOT EXISTS images (
             id INTEGER NOT NULL PRIMARY KEY,
             path TEXT NOT NULL UNIQUE,
-            params TEXT,
+            params TEXT
         )",
         [],
     )?;
@@ -34,7 +46,7 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS tags (
             id INTEGER NOT NULL PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL UNIQUE
         )",
         [],
     )?;
@@ -46,7 +58,7 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
             tag_id INTEGER NOT NULL,
             UNIQUE (image_id, tag_id),
             FOREIGN KEY (image_id) REFERENCES images(id),
-            FOREIGN KEY (tag_id) REFERENCES tags(id),
+            FOREIGN KEY (tag_id) REFERENCES tags(id)
         )",
         [],
     )?;
@@ -57,7 +69,15 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
 pub fn add_image(conn: &Connection, path: &str) -> Result<()> {
     conn.execute(
         "INSERT INTO images (path) values (?1) ON CONFLICT(path) DO NOTHING",
-        [],
+        [path],
+    )?;
+    Ok(())
+}
+
+pub fn add_image_with_params(conn: &Connection, path: &str, params: &str) -> Result<()> {
+    conn.execute(
+        "INSERT INTO images (path, params) values (?1, ?2) ON CONFLICT(path) DO NOTHING",
+        [path, params],
     )?;
     Ok(())
 }
