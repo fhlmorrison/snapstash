@@ -9,9 +9,15 @@
 
     let parameterText = "";
 
-    onMount(async () => {
-        parameterText = await readParameters(path);
-    });
+    $: updateParameterText(path);
+
+    const updateParameterText = async (pth: string) => {
+        parameterText = await readParameters(pth);
+    };
+
+    // onMount(async () => {
+    //     parameterText = await readParameters(path);
+    // });
 
     let modal;
     onMount(() => {
@@ -52,7 +58,7 @@
         role="button"
         on:click={closeModal}
         tabindex={0}
-        on:keydown={keyPressed}
+        on:keydown={() => {}}
     />
     <img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
     <button class="prev" on:click={prev}>&lt</button>
