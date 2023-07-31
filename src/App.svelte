@@ -8,8 +8,10 @@
     openDirectory,
     readDirImages,
     saveImages,
+    searchImages,
   } from "./lib/loadassets";
   import type { ImageInfo } from "./lib/types";
+  import { path } from "@tauri-apps/api";
 
   let imgUrl: string = "";
   let imageFiles: FileEntry[] = [];
@@ -54,6 +56,22 @@
   const save = async () => {
     await saveImages(imageFiles.map((file) => file.path));
   };
+
+  // Search
+
+  let queryText = "";
+  const search = () => {
+    searchImages(queryText).then(async (files) => {
+      imageFiles = await Promise.all(
+        files.map(async (filePath) => {
+          return {
+            name: await path.basename(filePath),
+            path: filePath,
+          };
+        })
+      );
+    });
+  };
 </script>
 
 <main class="container">
@@ -69,6 +87,10 @@
     </button>
     <button class="save-button" on:click={save}> Save Images </button>
   {/if}
+  <div>
+    <input type="text" bind:value={queryText} />
+    <button on:click={search}>Search</button>
+  </div>
 
   {#if imgUrl}
     <div class="image-frame">

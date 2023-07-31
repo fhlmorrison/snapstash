@@ -31,6 +31,7 @@ export async function openDirectory() {
     defaultPath: "~/pictures",
     multiple: false,
     directory: true,
+    recursive: true,
   })) as string;
   return directory || "";
 }
@@ -61,6 +62,10 @@ export async function saveImages(images: string[]) {
   catch (e) {
     console.log("Error saving images: ", e);
   }
+}
+
+export function searchImages(queryText: string) {
+  return invoke<string[]>("search_images", { queryText });
 }
 
 

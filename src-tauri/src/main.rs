@@ -50,6 +50,14 @@ fn save_images(app_handle: AppHandle, images: Vec<&str>) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+async fn search_images(app: tauri::AppHandle, query_text: &str) -> Result<Vec<String>, String> {
+    let images = app
+        .db(|db| database::search_params(db, query_text))
+        .map_err(|e| e.to_string())?;
+    Ok(images)
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(database::AppState {
@@ -58,7 +66,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             greet,
             read_parameters,
-            save_images
+            save_images,
+            search_images
         ])
         .setup(|app| {
             let handle = app.handle();

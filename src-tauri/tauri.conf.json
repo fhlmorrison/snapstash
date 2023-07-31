@@ -15,7 +15,15 @@
       "protocol": {
         "all": false,
         "asset": true,
-        "assetScope": []
+        "assetScope": {
+          "allow": [
+            "img-src 'self' asset: https://asset.localhost",
+            "**/**"
+          ]
+        }
+      },
+      "path": {
+        "all": true
       },
       "fs": {
         "all": false,

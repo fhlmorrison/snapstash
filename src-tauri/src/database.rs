@@ -118,3 +118,15 @@ pub fn add_tag_to_image(conn: &Connection, image_id: i32, tag_id: i32) -> Result
     )?;
     Ok(())
 }
+
+pub fn search_params(conn: &Connection, query_text: &str) -> Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT path FROM images WHERE params LIKE ?1")?;
+    let params = format!("%{}%", query_text);
+    let mut rows = stmt.query_map([params], |row| row.get(0))?;
+    let images = rows
+        .by_ref()
+        .filter(|r| r.is_ok())
+        .map(|r| r.unwrap())
+        .collect();
+    Ok(images)
+}
