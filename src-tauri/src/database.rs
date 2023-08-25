@@ -37,6 +37,7 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS images (
             id INTEGER NOT NULL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
             path TEXT NOT NULL UNIQUE,
             params TEXT
         )",
@@ -67,17 +68,27 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
 }
 
 pub fn add_image(conn: &Connection, path: &str) -> Result<()> {
+    static UNKNOWN: &str = "unknown";
+    let name = std::path::Path::new(path)
+        .file_name()
+        .map(|file_name| file_name.to_str().unwrap_or(UNKNOWN))
+        .unwrap_or(UNKNOWN);
     conn.execute(
-        "INSERT INTO images (path) values (?1) ON CONFLICT(path) DO NOTHING",
-        [path],
+        "INSERT INTO images (path, name) values (?1, ?2) ON CONFLICT(path) DO NOTHING",
+        [path, name],
     )?;
     Ok(())
 }
 
 pub fn add_image_with_params(conn: &Connection, path: &str, params: &str) -> Result<()> {
+    static UNKNOWN: &str = "unknown";
+    let name = std::path::Path::new(path)
+        .file_name()
+        .map(|file_name| file_name.to_str().unwrap_or(UNKNOWN))
+        .unwrap_or(UNKNOWN);
     conn.execute(
-        "INSERT INTO images (path, params) values (?1, ?2) ON CONFLICT(path) DO NOTHING",
-        [path, params],
+        "INSERT INTO images (path, name, params) values (?1, ?2, ?3) ON CONFLICT(path) DO NOTHING",
+        [path, name, params],
     )?;
     Ok(())
 }
@@ -120,7 +131,8 @@ pub fn add_tag_to_image(conn: &Connection, image_id: i32, tag_id: i32) -> Result
 }
 
 pub fn search_params(conn: &Connection, query_text: &str) -> Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT path FROM images WHERE params LIKE ?1")?;
+    let mut stmt =
+        conn.prepare("SELECT path FROM images WHERE params LIKE ?1 ORDER BY name DESC")?;
     let params = format!("%{}%", query_text);
     let mut rows = stmt.query_map([params], |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
