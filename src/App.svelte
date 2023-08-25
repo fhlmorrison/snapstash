@@ -12,6 +12,7 @@
   } from "./lib/loadassets";
   import type { ImageInfo } from "./lib/types";
   import { path } from "@tauri-apps/api";
+  import SearchBar from "./lib/SearchBar.svelte";
 
   let imgUrl: string = "";
   let imageFiles: FileEntry[] = [];
@@ -57,20 +58,17 @@
     await saveImages(imageFiles.map((file) => file.path));
   };
 
-  // Search
-
-  let queryText = "";
-  const search = () => {
-    searchImages(queryText).then(async (files) => {
-      imageFiles = await Promise.all(
-        files.map(async (filePath) => {
-          return {
-            name: await path.basename(filePath),
-            path: filePath,
-          };
-        })
-      );
-    });
+  const searchNew = async (e) => {
+    imageFiles = await Promise.all(
+      (
+        await searchImages(e.detail)
+      ).map(async (filePath) => {
+        return {
+          name: await path.basename(filePath),
+          path: filePath,
+        };
+      })
+    );
   };
 </script>
 
@@ -87,10 +85,7 @@
     </button>
     <button class="save-button" on:click={save}> Save Images </button>
   {/if}
-  <div>
-    <input type="text" bind:value={queryText} />
-    <button on:click={search}>Search</button>
-  </div>
+  <SearchBar on:search={searchNew} />
 
   {#if imgUrl}
     <div class="image-frame">
