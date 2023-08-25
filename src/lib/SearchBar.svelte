@@ -9,7 +9,11 @@
     };
 </script>
 
-<div on:keypress={(e) => (e.key == "enter" ? submit : undefined)}>
+<div
+    on:keypress={(e) => {
+        if (e.key == "Enter") submit();
+    }}
+>
     <input type="text" bind:value />
     <button on:click={submit}>Search</button>
 </div>
