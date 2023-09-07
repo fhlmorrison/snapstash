@@ -1,23 +1,21 @@
 <script>
     import { onMount } from "svelte";
-    import { createTag, getTags } from "./loadassets";
-
-    let tags = [];
-
-    const loadtags = async () => {
-        tags = await getTags();
-    };
-
-    onMount(loadtags);
+    import { tags } from "./tags";
 
     const addTag = () => {
-        createTag(pendingTag);
-        loadtags();
+        tags.create(pendingTag);
+        tags.refresh();
     };
+
     let open = false;
+
     const toggleOpen = () => {
         open = !open;
     };
+
+    onMount(() => {
+        tags.refresh();
+    });
 
     let pendingTag = "";
 </script>
@@ -30,9 +28,9 @@
 {#if open}
     <div class="tag-menu">
         <!-- markup (zero or more items) goes here -->
-        <button on:click={loadtags}>Refresh Tags</button>
+        <button on:click={tags.refresh}>Refresh Tags</button>
         <div class="taglist">
-            {#each tags as tag}
+            {#each $tags as tag}
                 <div class="tag">
                     {tag}
                 </div>
