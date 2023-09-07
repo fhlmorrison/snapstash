@@ -1,31 +1,18 @@
 <script lang="ts">
   import ImageModal from "./lib/ImageModal.svelte";
-  import type { FileEntry } from "@tauri-apps/api/fs";
   import ImageSquare from "./lib/ImageSquare.svelte";
-  import {
-    openImage,
-    openImageDialogue,
-    openDirectory,
-    readDirImages,
-    saveImages,
-    searchImages,
-  } from "./lib/loadassets";
-  import type { ImageInfo } from "./lib/types";
-  import { path } from "@tauri-apps/api";
+  import { openImageDialogue, images, type ImageInfo } from "./lib/images";
   import SearchBar from "./lib/SearchBar.svelte";
   import TagModal from "./lib/TagModal.svelte";
 
   let imgUrl: string = "";
-  let imageFiles: FileEntry[] = [];
-  // $: console.log(imageFiles);
-  let imageUrls: ImageInfo[] = [];
 
   let selectedIndex = 0;
 
   let selected: ImageInfo | null;
   let expanded: boolean;
 
-  $: selected = imageUrls[selectedIndex] || null;
+  $: selected = $images[selectedIndex];
 
   const expandImage = (event: CustomEvent<number>) => {
     selectedIndex = event.detail;
@@ -36,55 +23,23 @@
     selectedIndex = event.detail;
   };
 
-  const openImages = async (files: FileEntry[]) => {
-    imageUrls = await Promise.all(
-      imageFiles.map(async (file) => ({
-        path: file.path,
-        name: file.name,
-        src: await openImage(file.path),
-      }))
-    );
-  };
-  $: openImages(imageFiles);
-
   const getImage = async () => {
     imgUrl = (await openImageDialogue()) || "";
   };
 
-  const getDir = async () => {
-    imageFiles = await readDirImages(await openDirectory());
-  };
-
-  const save = async () => {
-    await saveImages(imageFiles.map((file) => file.path));
-  };
-
   const searchNew = async (e) => {
-    imageFiles = await Promise.all(
-      (
-        await searchImages(e.detail)
-      ).map(async (filePath) => {
-        return {
-          name: await path.basename(filePath),
-          path: filePath,
-        };
-      })
-    );
+    images.search(e.detail);
   };
 </script>
 
 <main class="container">
   <button on:click={getImage}>Open Image</button>
-  <button on:click={getDir}>Open Directory</button>
-  {#if imageUrls.length > 0}
-    <button
-      class="clear-button"
-      on:click={() => {
-        imageUrls = [];
-      }}
+  <button on:click={images.opendir}>Open Directory</button>
+  {#if $images.length > 0}
+    <button class="clear-button" on:click={images.reset}
       >Close Directory
     </button>
-    <button class="save-button" on:click={save}> Save Images </button>
+    <button class="save-button" on:click={images.save}> Save Images </button>
   {/if}
   <SearchBar on:search={searchNew} />
   <TagModal />
@@ -115,7 +70,7 @@
   {/if}
 
   <div class="image-grid">
-    {#each imageUrls as image, index}
+    {#each $images as image, index}
       <ImageSquare
         {index}
         src={image.src}
@@ -135,10 +90,10 @@
     path={selected?.path}
     on:close={expandImage}
     on:next={() => {
-      selectedIndex = (selectedIndex + 1) % imageUrls.length;
+      selectedIndex = (selectedIndex + 1) % $images.length;
     }}
     on:prev={() => {
-      selectedIndex = (selectedIndex - 1 + imageUrls.length) % imageUrls.length;
+      selectedIndex = (selectedIndex - 1 + $images.length) % $images.length;
     }}
   />
 {/if}
