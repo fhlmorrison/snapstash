@@ -2,6 +2,10 @@
 
 Image browser built with [SDWebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) images in mind.
 
+<p align="center">
+    <img src="preview.png" alt="Preview Image" width="512px"/>
+</p>
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
