@@ -13,6 +13,7 @@
   import type { ImageInfo } from "./lib/types";
   import { path } from "@tauri-apps/api";
   import SearchBar from "./lib/SearchBar.svelte";
+  import TagModal from "./lib/TagModal.svelte";
 
   let imgUrl: string = "";
   let imageFiles: FileEntry[] = [];
@@ -86,6 +87,7 @@
     <button class="save-button" on:click={save}> Save Images </button>
   {/if}
   <SearchBar on:search={searchNew} />
+  <TagModal />
 
   {#if imgUrl}
     <div class="image-frame">

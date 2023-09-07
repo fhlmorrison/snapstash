@@ -58,6 +58,22 @@ async fn search_images(app: tauri::AppHandle, query_text: &str) -> Result<Vec<St
     Ok(images)
 }
 
+#[tauri::command]
+fn get_tags(app: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let image = app
+        .db(|db| database::get_tags(db))
+        .map_err(|e| e.to_string())?;
+    Ok(image)
+}
+
+#[tauri::command]
+fn create_tag(app: tauri::AppHandle, tag: &str) -> Result<(), String> {
+    let image = app
+        .db(|db| database::create_tag(db, tag))
+        .map_err(|e| e.to_string())?;
+    Ok(image)
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(database::AppState {
@@ -67,7 +83,9 @@ fn main() {
             greet,
             read_parameters,
             save_images,
-            search_images
+            search_images,
+            get_tags,
+            create_tag
         ])
         .setup(|app| {
             let handle = app.handle();

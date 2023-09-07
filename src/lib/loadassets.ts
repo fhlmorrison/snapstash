@@ -68,7 +68,14 @@ export function searchImages(queryText: string) {
   return invoke<string[]>("search_images", { queryText });
 }
 
-
 // Mutual recursion for processing nested directories
 const processEntries = (entries: FileEntry[]): FileEntry[] => entries.flatMap((entry) => processEntry(entry));
 const processEntry = ({ children = [], name, path }: FileEntry): FileEntry[] => [{ name, path }, ...processEntries(children)]
+
+export function getTags() {
+  return invoke<string[]>("get_tags");
+}
+
+export function createTag(tag: string) {
+  return invoke<string[]>("create_tag", { tag });
+}
