@@ -64,8 +64,8 @@
   <button class="prev" on:click={prev}>&lt</button>
   <button class="next" on:click={next}>&gt</button>
   <div class="text-box">
-    <h2>{alt}</h2>
-    <div>{parameterText}</div>
+    <h2 class="title">{alt}</h2>
+    <div class="parameter-text">{parameterText}</div>
   </div>
 </div>
 
@@ -94,9 +94,10 @@
     position: fixed;
     bottom: 0;
     left: 0;
-    padding: 1em;
+    padding: 1rem;
     z-index: 2;
     color: #fff;
+    width: calc(100% - 50px);
   }
 
   .next,
@@ -130,5 +131,20 @@
   .prev {
     left: 0;
     padding-left: 5px;
+  }
+
+  .title {
+    max-height: 1.5rem;
+    padding: 0;
+  }
+  .parameter-text {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 1em;
+    border-radius: 1em;
+    max-height: 3rem;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    padding: 0.25rem 0.75rem;
+    width: 100%;
   }
 </style>
