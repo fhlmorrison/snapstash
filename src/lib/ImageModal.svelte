@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { readParameters } from "./images";
+  import { readParameters, readTags } from "./images";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   export let src = "";
@@ -18,6 +18,16 @@
   // onMount(async () => {
   //     parameterText = await readParameters(path);
   // });
+
+  let showTags = false;
+
+  let tags = [];
+
+  $: setTags(path);
+
+  const setTags = async (src: string) => {
+    tags = await readTags(src);
+  };
 
   let modal;
   onMount(() => {
@@ -61,11 +71,32 @@
     on:keydown={() => {}}
   />
   <img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
-  <button class="prev" on:click={prev}>&lt</button>
-  <button class="next" on:click={next}>&gt</button>
+
+  <button class="prev nav-button" on:click={prev}>&lt</button>
+  <button class="next nav-button" on:click={next}>&gt</button>
   <div class="text-box">
     <h2 class="title">{alt}</h2>
-    <div class="parameter-text">{parameterText}</div>
+    <div class="parameter-box">
+      <button class="tag-button" on:click={() => (showTags = !showTags)}>
+        {#if showTags}
+          Tags
+        {:else}
+          Params
+        {/if}
+      </button>
+      <div class="parameter-text">
+        {#if showTags}
+          {#each tags as tag}
+            <div class="tag">{tag}</div>
+          {/each}
+          <button on:click={() => console.log("add tag")} class="tag add-tag"
+            >+</button
+          >
+        {:else}
+          {parameterText}
+        {/if}
+      </div>
+    </div>
   </div>
 </div>
 
@@ -116,7 +147,7 @@
     background-color: rgba(0, 0, 0, 0.5);
   }
 
-  button {
+  .nav-button {
     background-color: transparent;
     border: none;
     color: #fff;
@@ -137,14 +168,61 @@
     max-height: 1.5rem;
     padding: 0;
   }
+
+  .parameter-box {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
   .parameter-text {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 1em;
     border-radius: 1em;
-    max-height: 3rem;
+    height: 3rem;
     overflow-y: scroll;
     scrollbar-width: thin;
     padding: 0.25rem 0.75rem;
     width: 100%;
+  }
+
+  .tags {
+    position: fixed;
+    top: 0;
+    right: 50%;
+    z-index: 2;
+    padding: 1rem;
+  }
+
+  .tag-button {
+    background-color: rgba(0, 0, 0, 0.75);
+    height: auto;
+    width: 10ch;
+    border: none;
+    color: #fff;
+    font-size: 1em;
+    cursor: pointer;
+    padding: 0.5em;
+    border-radius: 1em;
+    margin-bottom: 0.5em;
+  }
+
+  .tag {
+    display: inline-block;
+    border-radius: 25px;
+    border: 1px solid black;
+    padding: 0.25em 0.5em;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+    text-align: center;
+  }
+
+  .add-tag {
+    background-color: rgba(0, 0, 0, 0);
+    color: #fff;
+    min-width: 1em;
+    font-size: 1.25rem;
+    font-weight: 500;
+    font-family: inherit;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
   }
 </style>

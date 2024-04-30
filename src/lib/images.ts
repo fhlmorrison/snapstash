@@ -52,6 +52,14 @@ export async function readParameters(src: string) {
   }
 }
 
+export async function readTags(src: string) {
+  try {
+    return await invoke<Array<string>>("read_tags", { src });
+  } catch (e) {
+    console.log("Error reading tags: ", e);
+  }
+}
+
 async function saveImages(images: string[]) {
   try {
     return await invoke<string>("save_images", { images });

@@ -3,7 +3,9 @@
 
 use std::path::PathBuf;
 mod database;
+mod parameters;
 
+use database::get_image_tags;
 use tauri::{AppHandle, Manager};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -25,6 +27,62 @@ fn read_parameters(src: &str) -> Result<String, String> {
         .find(|c| c.keyword == "parameters")
         .map(|c| c.text.clone())
         .ok_or("No parameters found".to_string());
+}
+
+#[tauri::command]
+fn read_tags(app_handle: AppHandle, src: &str) -> Result<Vec<String>, String> {
+    // println!("Reading parameters from {}", src);
+    app_handle
+        .db(|db| database::get_image_tags(db, src))
+        .map_err(|e| e.to_string())
+}
+
+// Add tag to images that have the tag word in their prompt parameters
+#[tauri::command]
+fn auto_tag(
+    app_handle: AppHandle,
+    tag: &str,
+    images: Vec<&str>,
+    strict: bool,
+) -> Result<(), String> {
+    println!("Auto tagging images with tag {}", tag);
+
+    let lower_tag = tag.to_lowercase();
+    let lower_tag = lower_tag.as_str();
+
+    for x in images {
+        let params = read_parameters(x);
+        if let Ok(p) = params {
+            let tags = parameters::get_prompts(&p);
+
+            // ASSUMPTION: Prompt tokens are all lowercase
+
+            let contains = if strict {
+                // Strict (exact match to prompt token)
+                tags.contains(&lower_tag)
+            } else {
+                // Contains (tag is in prompt token)
+                tags.iter().any(|t| t.to_lowercase().contains(lower_tag))
+            };
+
+            // Strict contains
+            if contains {
+                println!("Tagging {}", x);
+                // Save in db
+                let res = app_handle.db(|db| database::add_tag_to_image(db, x, tag));
+                // Match on success/failure
+                match res {
+                    Ok(_) => println!("Tagged {}", x),
+                    Err(e) => println!("Failed to tag {}: {}", x, e),
+                }
+            }
+        } else {
+            println!("Failed to read parameters for {}", x);
+        }
+    }
+    println!("Finished auto tagging images with tag {}", tag);
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -85,7 +143,9 @@ fn main() {
             save_images,
             search_images,
             get_tags,
-            create_tag
+            create_tag,
+            auto_tag,
+            read_tags
         ])
         .setup(|app| {
             let handle = app.handle();

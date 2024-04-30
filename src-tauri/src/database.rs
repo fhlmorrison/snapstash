@@ -114,6 +114,13 @@ pub fn add_params(conn: &Connection, path: &str, params: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn get_params(conn: &Connection, path: &str) -> Result<Option<String>> {
+    let mut stmt = conn.prepare("SELECT params FROM images WHERE path = ?1")?;
+    let mut rows = stmt.query_map([path], |row| row.get(0))?;
+    let params = rows.by_ref().flatten().next().unwrap_or(None);
+    Ok(params)
+}
+
 pub fn create_tag(conn: &Connection, name: &str) -> Result<()> {
     conn.execute(
         "INSERT INTO tags (name) values (?1) ON CONFLICT(name) DO NOTHING",
@@ -122,7 +129,18 @@ pub fn create_tag(conn: &Connection, name: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn add_tag_to_image(conn: &Connection, image_id: i32, tag_id: i32) -> Result<()> {
+pub fn add_tag_to_image(conn: &Connection, image: &str, tag: &str) -> Result<()> {
+    conn.execute(
+        "INSERT INTO image_tags (image_id, tag_id) values
+        ((SELECT id FROM images WHERE path = ?1),
+        (SELECT id FROM tags WHERE name = ?2))
+        ON CONFLICT(image_id, tag_id) DO NOTHING",
+        [image, tag],
+    )?;
+    Ok(())
+}
+
+pub fn add_tag_to_image_by_id(conn: &Connection, image_id: i32, tag_id: i32) -> Result<()> {
     conn.execute(
         "INSERT INTO image_tags (image_id, tag_id) values (?1, ?2) ON CONFLICT(image_id, tag_id) DO NOTHING",
         [image_id, tag_id],
@@ -138,14 +156,44 @@ pub fn get_tags(conn: &Connection) -> Result<Vec<String>> {
 }
 
 pub fn get_tag_counts(conn: &Connection) -> Result<Vec<(String, i32)>> {
-    let mut stmt = conn.prepare("SELECT tags.name, COUNT(image_tags.tag_id) FROM tags LEFT JOIN image_tags ON tags.id = image_tags.tag_id GROUP BY tags.name ORDER BY tags.name ASC")?;
+    let mut stmt = conn.prepare(
+        "SELECT tags.name, COUNT(image_tags.tag_id) FROM tags 
+    LEFT JOIN image_tags ON tags.id = image_tags.tag_id 
+    GROUP BY tags.name ORDER BY tags.name ASC",
+    )?;
     let mut rows = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
     let tags: Vec<(String, i32)> = rows.by_ref().flatten().collect();
     Ok(tags)
 }
 
+pub fn get_image_tags(conn: &Connection, image: &str) -> Result<Vec<String>> {
+    let mut stmt = conn.prepare(
+        "SELECT tags.name FROM tags 
+            INNER JOIN image_tags ON tags.id = image_tags.tag_id 
+            WHERE image_tags.image_id = (SELECT id FROM images WHERE path = ?1) 
+            ORDER BY tags.name ASC",
+    )?;
+    let mut rows = stmt.query_map([image], |row| row.get(0))?;
+    let tags: Vec<String> = rows.by_ref().flatten().collect();
+    Ok(tags)
+}
+
+pub fn get_image_tags_by_id(conn: &Connection, image_id: i32) -> Result<Vec<String>> {
+    let mut stmt = conn.prepare(
+        "SELECT tags.name FROM tags 
+        INNER JOIN image_tags ON tags.id = image_tags.tag_id 
+        WHERE image_tags.image_id = ?1 
+        ORDER BY tags.name ASC",
+    )?;
+    let mut rows = stmt.query_map([image_id], |row| row.get(0))?;
+    let tags: Vec<String> = rows.by_ref().flatten().collect();
+    Ok(tags)
+}
+
 pub fn search_with_tags_or(conn: &Connection, tags: &[String]) -> Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT path FROM images WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN (?1))) ORDER BY name DESC")?;
+    let mut stmt = conn.prepare("SELECT path FROM images 
+    WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN (?1))) 
+    ORDER BY name DESC")?;
     let tags = tags.join(",");
     let mut rows = stmt.query_map([tags], |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
@@ -154,7 +202,9 @@ pub fn search_with_tags_or(conn: &Connection, tags: &[String]) -> Result<Vec<Str
 
 pub fn search_with_tags_and(conn: &Connection, tags: &[String]) -> Result<Vec<String>> {
     !todo!("Implement search with tags and");
-    let mut stmt = conn.prepare("SELECT path FROM images WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN (?1))) ORDER BY name DESC")?;
+    let mut stmt = conn.prepare("SELECT path FROM images 
+    WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN (?1))) 
+    ORDER BY name DESC")?;
     let tags = tags.join(",");
     let mut rows = stmt.query_map([tags], |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
@@ -162,8 +212,11 @@ pub fn search_with_tags_and(conn: &Connection, tags: &[String]) -> Result<Vec<St
 }
 
 pub fn search_params(conn: &Connection, query_text: &str) -> Result<Vec<String>> {
-    let mut stmt =
-        conn.prepare("SELECT path FROM images WHERE params LIKE ?1 ORDER BY name DESC")?;
+    let mut stmt = conn.prepare(
+        "SELECT path FROM images 
+        WHERE params LIKE ?1 
+        ORDER BY name DESC",
+    )?;
     let params = format!("%{}%", query_text);
     let mut rows = stmt.query_map([params], |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
