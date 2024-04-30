@@ -10,6 +10,8 @@
 
   let open = false;
 
+  let strict = true;
+
   const toggleOpen = () => {
     open = !open;
   };
@@ -30,6 +32,10 @@
   <div class="tag-menu">
     <!-- markup (zero or more items) goes here -->
     <button on:click={tags.refresh}>Refresh Tags</button>
+    <label for="auto-tag"
+      >Strict
+      <input type="checkbox" id="auto-tag" bind:checked={strict} />
+    </label>
     <div class="taglist">
       {#each $tags as tag}
         <div class="tag">
@@ -38,7 +44,8 @@
             on:click={() =>
               tags.autoTag(
                 tag,
-                $images.map((i) => i.path)
+                $images.map((i) => i.path),
+                strict
               )}>AutoTag</button
           >
         </div>

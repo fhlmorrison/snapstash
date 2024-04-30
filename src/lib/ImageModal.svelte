@@ -15,10 +15,6 @@
     parameterText = await readParameters(pth);
   };
 
-  // onMount(async () => {
-  //     parameterText = await readParameters(path);
-  // });
-
   let showTags = false;
 
   let tags = [];
@@ -183,14 +179,6 @@
     scrollbar-width: thin;
     padding: 0.25rem 0.75rem;
     width: 100%;
-  }
-
-  .tags {
-    position: fixed;
-    top: 0;
-    right: 50%;
-    z-index: 2;
-    padding: 1rem;
   }
 
   .tag-button {
