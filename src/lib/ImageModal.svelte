@@ -132,18 +132,12 @@
     position: fixed;
     top: 0;
     z-index: 2;
-    height: 100%;
+    height: 50%;
     display: flex;
     align-items: center;
+    top: 50%;
+    transform: translate(0, -50%);
     width: clamp(10%, 100px, 20%);
-  }
-
-  .next:hover,
-  .prev:hover {
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  .nav-button {
     background-color: transparent;
     border: none;
     color: #fff;
@@ -151,13 +145,20 @@
     cursor: pointer;
   }
 
+  .next:hover,
+  .prev:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
   .next {
     right: 0;
     padding-right: 5px;
+    border-radius: 100% 0 0 100%;
   }
   .prev {
     left: 0;
     padding-left: 5px;
+    border-radius: 0 100% 100% 0;
   }
 
   .title {
