@@ -67,7 +67,8 @@
     flex-direction: column;
     gap: 0.5rem;
     padding: 0 10%;
-    /* margin: 0.5rem; */
+    height: 50vh;
+    overflow-y: scroll;
   }
   .toggle-triangle {
     display: inline-block;

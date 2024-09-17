@@ -2,6 +2,7 @@
   import { readParameters, readTags } from "./images";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
+  import TagAdder from "./TagAdder.svelte";
   export let src = "";
   export let alt = "";
   export let path = "";
@@ -55,6 +56,8 @@
         break;
     }
   };
+
+  let showAddTag = false;
 </script>
 
 <div on:keydown={keyPressed} tabindex="-1">
@@ -80,18 +83,28 @@
           Params
         {/if}
       </button>
-      <div class="parameter-text">
-        {#if showTags}
+      {#if showTags}
+        <div class="tag-text">
           {#each tags as tag}
             <div class="tag">{tag}</div>
           {/each}
-          <button on:click={() => console.log("add tag")} class="tag add-tag"
-            >+</button
-          >
-        {:else}
+          {#if showAddTag}
+            <TagAdder
+              on:close={() => {
+                showAddTag = false;
+              }}
+            />
+          {:else}
+            <button on:click={() => (showAddTag = true)} class="tag add-tag"
+              >+</button
+            >
+          {/if}
+        </div>
+      {:else}
+        <div class="parameter-text">
           {parameterText}
-        {/if}
-      </div>
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -171,15 +184,19 @@
     flex-direction: row;
     gap: 0.5rem;
   }
-  .parameter-text {
+  .parameter-text,
+  .tag-text {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 1em;
     border-radius: 1em;
     height: 3rem;
-    overflow-y: scroll;
-    scrollbar-width: thin;
     padding: 0.25rem 0.75rem;
     width: 100%;
+  }
+
+  .parameter-text {
+    overflow-y: scroll;
+    scrollbar-width: thin;
   }
 
   .tag-button {
