@@ -8,6 +8,10 @@
     tags.refresh();
   };
 
+  $: filteredTags = $tags.filter((tag) =>
+    tag.toLowerCase().includes(pendingTag.toLowerCase())
+  );
+
   let open = false;
 
   let strict = true;
