@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { createEventDispatcher } from "svelte";
   import { tags } from "./tags";
 
@@ -7,7 +7,7 @@
   let queryString = "";
 
   const dispatch = createEventDispatcher();
-  const addTag = (tag) => {
+  const addTag = (tag: string) => {
     dispatch("addTag", tag);
     dispatch("close", null);
   };
@@ -20,13 +20,6 @@
   const onClose = () => {
     dispatch("close", null);
   };
-
-  const onInput = (e) => {
-    if (e.key === "Enter") {
-      addTag(e.target.value);
-      e.target.value = "";
-    }
-  };
 </script>
 
 <div id="tag-adder">
@@ -35,14 +28,13 @@
       id="queryinput"
       type="text"
       placeholder="Add a tag"
-      on:keydown={onInput}
       bind:value={queryString}
     />
     <div id="taglist">
       {#each filteredTags as tag}
         <button class="tag" on:click={() => addTag(tag)}>{tag}</button>
       {/each}
-      {#if queryString.length > 0}
+      {#if queryString.length > 0 && !filteredTags.includes(queryString)}
         <button class="tag" on:click={() => createAndAddTag(queryString)}
           >Create "{queryString}" tag</button
         >

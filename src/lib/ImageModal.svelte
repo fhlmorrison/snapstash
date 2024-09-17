@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   import TagAdder from "./TagAdder.svelte";
+  import { tagImage } from "./tags";
   export let src = "";
   export let alt = "";
   export let path = "";
@@ -92,6 +93,10 @@
             <TagAdder
               on:close={() => {
                 showAddTag = false;
+              }}
+              on:addTag={({ detail: tag }) => {
+                tagImage(path, tag);
+                setTags(path);
               }}
             />
           {:else}

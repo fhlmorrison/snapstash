@@ -37,6 +37,14 @@ fn read_tags(app_handle: AppHandle, src: &str) -> Result<Vec<String>, String> {
         .map_err(|e| e.to_string())
 }
 
+// Manually add a tag to an image
+#[tauri::command]
+fn add_tag_to_image(app_handle: AppHandle, image: &str, tag: &str) -> Result<(), String> {
+    app_handle
+        .db(|db| database::add_tag_to_image(db, image, tag))
+        .map_err(|e| e.to_string())
+}
+
 // Add tag to images that have the tag word in their prompt parameters
 #[tauri::command]
 fn auto_tag(
@@ -145,7 +153,8 @@ fn main() {
             get_tags,
             create_tag,
             auto_tag,
-            read_tags
+            read_tags,
+            add_tag_to_image
         ])
         .setup(|app| {
             let handle = app.handle();

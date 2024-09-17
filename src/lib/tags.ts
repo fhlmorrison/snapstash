@@ -36,3 +36,7 @@ export const tags = {
   },
   autoTag,
 };
+
+export async function tagImage(image: string, tag: string) {
+  return await invoke<void>("add_tag_to_image", { image, tag });
+}
