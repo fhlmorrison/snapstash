@@ -3,7 +3,9 @@
   import { tags } from "./tags";
 
   let availableTags = $tags;
-  $: filteredTags = availableTags.filter((tag) => tag.includes(queryString));
+  $: filteredTags = availableTags.filter((tag) =>
+    tag.toLowerCase().includes(queryString.toLowerCase())
+  );
   let queryString = "";
 
   const dispatch = createEventDispatcher();
