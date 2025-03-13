@@ -41,7 +41,7 @@
       <input type="checkbox" id="auto-tag" bind:checked={strict} />
     </label>
     <div class="taglist">
-      {#each $tags as tag}
+      {#each filteredTags as tag}
         <div class="tag">
           {tag}
           <button

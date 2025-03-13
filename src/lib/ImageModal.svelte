@@ -13,6 +13,8 @@
 
   $: updateParameterText(path);
 
+  $: isVideo = path.includes(".mp4");
+
   const updateParameterText = async (pth: string) => {
     parameterText = await readParameters(pth);
   };
@@ -70,7 +72,12 @@
     tabindex={0}
     on:keydown={() => {}}
   />
-  <img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
+  {#if isVideo}
+    <video class="expanded-image" {src} on:keydown={keyPressed} controls />
+  {:else}
+    <img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
+  {/if}
+  <!-- <img class="expanded-image" {src} {alt} on:keydown={keyPressed} /> -->
 
   <button class="prev nav-button" on:click={prev}>&lt</button>
   <button class="next nav-button" on:click={next}>&gt</button>
@@ -90,15 +97,17 @@
             <div class="tag">{tag}</div>
           {/each}
           {#if showAddTag}
-            <TagAdder
-              on:close={() => {
-                showAddTag = false;
-              }}
-              on:addTag={({ detail: tag }) => {
-                tagImage(path, tag);
-                setTags(path);
-              }}
-            />
+            <div class="tag">
+              <TagAdder
+                on:close={() => {
+                  showAddTag = false;
+                }}
+                on:addTag={({ detail: tag }) => {
+                  tagImage(path, tag);
+                  setTags(path);
+                }}
+              />
+            </div>
           {:else}
             <button on:click={() => (showAddTag = true)} class="tag add-tag"
               >+</button
@@ -197,6 +206,8 @@
     height: 3rem;
     padding: 0.25rem 0.75rem;
     width: 100%;
+    flex-wrap: nowrap;
+    overflow: visible;
   }
 
   .parameter-text {

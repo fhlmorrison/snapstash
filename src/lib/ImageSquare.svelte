@@ -1,5 +1,6 @@
 <script lang="ts">
   import FaExpand from "svelte-icons/fa/FaExpand.svelte";
+  import FaPlay from "svelte-icons/fa/FaPlay.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
@@ -13,6 +14,20 @@
     // openImageDialogue();
     dispatch("select", index);
   };
+
+  let video;
+
+  const play = () => {
+    if (!video) return;
+
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  };
+
+  $: isVideo = path.includes(".mp4");
 
   const expand = () => dispatch("expand", index);
 
@@ -37,7 +52,16 @@
     <FaExpand />
   </div>
 
-  <img loading="lazy" {src} alt={name} />
+  {#if isVideo}
+    <video {src} bind:this={video} muted />
+    <div class="overlay" on:click={play}>
+      <FaPlay />
+    </div>
+  {:else}
+    <img loading="lazy" {src} alt={name} />
+  {/if}
+
+  <!-- <img loading="lazy" {src} alt={name} /> -->
 </div>
 
 <style>
@@ -73,6 +97,13 @@
     object-fit: cover;
   }
 
+  .image-square video {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
   .expand {
     position: absolute;
     top: 0;
@@ -82,6 +113,20 @@
     display: none;
     justify-content: center;
     align-items: center;
+    z-index: 10;
+  }
+
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    background-color: rgba(255, 255, 255, 0.5);
   }
 
   .expand:hover {
