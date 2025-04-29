@@ -39,6 +39,14 @@ async function openDirectory() {
 async function readDirImages(dirPath: string) {
   const entries: FileEntry[] = await readDir(dirPath);
   // console.log(`Read entries from ${dirPath}`, entries);
+  return processEntries(entries)
+    .filter((entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
+    .reverse();
+}
+
+async function readDirImagesRecursive(dirPath: string) {
+  const entries: FileEntry[] = await readDir(dirPath, { recursive: true });
+  // console.log(`Read entries from ${dirPath}`, entries);
   return processEntries(await entries)
     .filter((entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
     .reverse();
@@ -73,14 +81,15 @@ function searchImages(queryText: string) {
 }
 
 // Mutual recursion for processing nested directories
-const processEntries = (entries: FileEntry[]): FileEntry[] =>
-  entries.flatMap((entry) => processEntry(entry));
+const processEntries = (entries: FileEntry[]): FileEntry[] => {
+  console.log("Processing entries", entries);
+  return entries.flatMap((entry) => processEntry(entry));
+};
 
-const processEntry = ({
-  children = [],
-  name,
-  path,
-}: FileEntry): FileEntry[] => [{ name, path }, ...processEntries(children)];
+const processEntry = ({ children, name, path }: FileEntry): FileEntry[] => {
+  console.log("Processing entry", { name, path, children });
+  return [{ name, path }, ...processEntries(children ?? [])];
+};
 
 // Image Store
 export type ImageInfo = { src: string; name: string; path: string };
@@ -94,8 +103,24 @@ const save = () => {
 
 const opendir = async () => {
   const dir = await openDirectory();
+  console.log("Selected directory:", dir);
   if (dir) {
     const files = await readDirImages(dir);
+    const mappedImages = await Promise.all(
+      files.map(async ({ name, path }) => ({
+        name,
+        path,
+        src: await openImage(path),
+      }))
+    );
+    set(mappedImages);
+  }
+};
+
+const opendirRecursive = async () => {
+  const dir = await openDirectory();
+  if (dir) {
+    const files = await readDirImagesRecursive(dir);
     const mappedImages = await Promise.all(
       files.map(async ({ name, path }) => ({
         name,
@@ -128,6 +153,7 @@ export const images = {
   update,
   save,
   opendir,
+  opendirRecursive,
   reset: () => set([]),
   search,
 };

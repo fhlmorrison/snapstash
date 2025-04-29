@@ -35,6 +35,7 @@
 <main class="container">
   <button on:click={getImage}>Open Image</button>
   <button on:click={images.opendir}>Open Directory</button>
+  <button on:click={images.opendirRecursive}>Open Directory (Recursive)</button>
   {#if $images.length > 0}
     <button class="clear-button" on:click={images.reset}
       >Close Directory
