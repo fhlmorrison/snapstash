@@ -5,7 +5,7 @@ import type { FileEntry } from "@tauri-apps/api/fs";
 import { invoke, path } from "@tauri-apps/api";
 import { writable, get } from "svelte/store";
 
-const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4"];
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4", "webm"];
 
 export async function openImageDialogue() {
   const file = (await open({

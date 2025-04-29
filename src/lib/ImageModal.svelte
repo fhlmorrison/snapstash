@@ -13,7 +13,7 @@
 
   $: updateParameterText(path);
 
-  $: isVideo = path.includes(".mp4");
+  $: isVideo = path.includes(".mp4") || path.includes(".webm");
 
   const updateParameterText = async (pth: string) => {
     parameterText = await readParameters(pth);

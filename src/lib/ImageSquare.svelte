@@ -27,7 +27,7 @@
     }
   };
 
-  $: isVideo = path.includes(".mp4");
+  $: isVideo = path.includes(".mp4") || path.includes(".webm");
 
   const expand = () => dispatch("expand", index);
 
