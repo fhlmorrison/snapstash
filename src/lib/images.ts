@@ -80,6 +80,10 @@ function searchImages(queryText: string) {
   return invoke<string[]>("search_images", { queryText });
 }
 
+function searchImagesWithTags(tags: string[]) {
+  return invoke<string[]>("search_with_tags", { tags });
+}
+
 // Mutual recursion for processing nested directories
 const processEntries = (entries: FileEntry[]): FileEntry[] => {
   console.log("Processing entries", entries);
@@ -147,6 +151,21 @@ const search = async (queryText: string) => {
   set(imageFiles);
 };
 
+const searchByTag = async (tag: string) => {
+  const imageFiles: ImageInfo[] = await Promise.all(
+    (
+      await searchImagesWithTags([tag])
+    ).map(async (filePath) => {
+      return {
+        name: await path.basename(filePath),
+        path: filePath,
+        src: await openImage(filePath),
+      };
+    })
+  );
+  set(imageFiles);
+};
+
 export const images = {
   subscribe,
   set,
@@ -156,4 +175,5 @@ export const images = {
   opendirRecursive,
   reset: () => set([]),
   search,
+  searchByTag,
 };
