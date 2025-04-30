@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   import TagAdder from "./TagAdder.svelte";
-  import { tagImage } from "./tags";
+  import { removeTagFromImage, tagImage } from "./tags";
   export let src = "";
   export let alt = "";
   export let path = "";
@@ -19,7 +19,7 @@
     parameterText = await readParameters(pth);
   };
 
-  let showTags = false;
+  let showTags = true;
 
   let tags = [];
 
@@ -94,7 +94,13 @@
       {#if showTags}
         <div class="tag-text">
           {#each tags as tag}
-            <div class="tag">{tag}</div>
+            <button
+              class="tag remove-tag"
+              on:click={() => {
+                removeTagFromImage(path, tag);
+                setTags(path);
+              }}>{tag}</button
+            >
           {/each}
           {#if showAddTag}
             <div class="tag">
@@ -236,11 +242,15 @@
     margin-right: 0.5em;
     margin-bottom: 0.5em;
     text-align: center;
+    background-color: rgba(0, 0, 0, 0);
+    color: #fff;
+  }
+
+  .remove-tag:hover {
+    background-color: rgba(255, 0, 0, 0.5);
   }
 
   .add-tag {
-    background-color: rgba(0, 0, 0, 0);
-    color: #fff;
     min-width: 1em;
     font-size: 1.25rem;
     font-weight: 500;

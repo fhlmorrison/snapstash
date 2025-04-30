@@ -45,6 +45,15 @@ fn add_tag_to_image(app_handle: AppHandle, image: &str, tag: &str) -> Result<(),
         .map_err(|e| e.to_string())
 }
 
+// Manually remove a tag from an image
+#[tauri::command]
+fn remove_tag_from_image(app_handle: AppHandle, image: &str, tag: &str) -> Result<(), String> {
+    println!("Removing tag {} from image {}", tag, image);
+    app_handle
+        .db(|db| database::remove_tag_from_image(db, image, tag))
+        .map_err(|e| e.to_string())
+}
+
 // Add tag to images that have the tag word in their prompt parameters
 #[tauri::command]
 fn auto_tag(
@@ -154,7 +163,8 @@ fn main() {
             create_tag,
             auto_tag,
             read_tags,
-            add_tag_to_image
+            add_tag_to_image,
+            remove_tag_from_image,
         ])
         .setup(|app| {
             let handle = app.handle();

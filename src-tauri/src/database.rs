@@ -148,6 +148,16 @@ pub fn add_tag_to_image_by_id(conn: &Connection, image_id: i32, tag_id: i32) -> 
     Ok(())
 }
 
+pub fn remove_tag_from_image(conn: &Connection, image: &str, tag: &str) -> Result<()> {
+    conn.execute(
+        "DELETE FROM image_tags
+        WHERE image_id = (SELECT id FROM images WHERE path = ?1)
+        AND tag_id = (SELECT id FROM tags WHERE name = ?2)",
+        [image, tag],
+    )?;
+    Ok(())
+}
+
 pub fn get_tags(conn: &Connection) -> Result<Vec<String>> {
     let mut stmt = conn.prepare("SELECT name FROM tags ORDER BY name ASC")?;
     let mut rows = stmt.query_map([], |row| row.get(0))?;

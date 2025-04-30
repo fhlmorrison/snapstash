@@ -52,6 +52,13 @@
                 strict
               )}>AutoTag</button
           >
+          <button
+            on:click={() =>
+              tags.tagAllImages(
+                tag,
+                $images.map((i) => i.path)
+              )}>Tag All</button
+          >
         </div>
       {/each}
     </div>

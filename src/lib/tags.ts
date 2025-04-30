@@ -25,6 +25,16 @@ async function autoTag(tag: string, images: string[], strict = true) {
   }
 }
 
+async function tagAllImages(tag: string, images: string[]) {
+  for (const image of images) {
+    try {
+      await tagImage(image, tag);
+    } catch (e) {
+      console.log("Error tagging image ", image, " error: ", e);
+    }
+  }
+}
+
 export const tags = {
   subscribe,
   set,
@@ -35,8 +45,13 @@ export const tags = {
     await tags.refresh();
   },
   autoTag,
+  tagAllImages,
 };
 
 export async function tagImage(image: string, tag: string) {
   return await invoke<void>("add_tag_to_image", { image, tag });
+}
+
+export async function removeTagFromImage(image: string, tag: string) {
+  return await invoke<void>("remove_tag_from_image", { image, tag });
 }
