@@ -59,7 +59,9 @@
                 $images.map((i) => i.path)
               )}>Tag All</button
           >
-          <button on:click={() => images.searchByTag(tag)}>Open Tagged</button>
+          <button on:click={() => images.searchByTags([tag])}
+            >Open Tagged</button
+          >
         </div>
       {/each}
     </div>

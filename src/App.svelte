@@ -4,6 +4,7 @@
   import { openImageDialogue, images, type ImageInfo } from "./lib/images";
   import SearchBar from "./lib/SearchBar.svelte";
   import TagModal from "./lib/TagModal.svelte";
+  import SearchModal from "./lib/SearchModal.svelte";
 
   let imgUrl: string = "";
 
@@ -33,9 +34,13 @@
 </script>
 
 <main class="container">
-  <button on:click={getImage}>Open Image</button>
-  <button on:click={images.opendir}>Open Directory</button>
-  <button on:click={images.opendirRecursive}>Open Directory (Recursive)</button>
+  <div id="open-buttons">
+    <button on:click={getImage}>Open Image</button>
+    <button on:click={images.opendir}>Open Directory</button>
+    <button on:click={images.opendirRecursive}
+      >Open Directory (Recursive)</button
+    >
+  </div>
   {#if $images.length > 0}
     <button class="clear-button" on:click={images.reset}
       >Close Directory
@@ -43,6 +48,7 @@
     <button class="save-button" on:click={images.save}> Save Images </button>
   {/if}
   <SearchBar on:search={searchNew} />
+  <SearchModal />
   <TagModal />
 
   {#if imgUrl}
@@ -102,6 +108,13 @@
 <style>
   .clear-button {
     background-color: rgb(221, 161, 161);
+  }
+
+  #open-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5em;
+    width: 100%;
   }
 
   .image-grid {

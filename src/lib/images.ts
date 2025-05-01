@@ -151,10 +151,10 @@ const search = async (queryText: string) => {
   set(imageFiles);
 };
 
-const searchByTag = async (tag: string) => {
+const searchByTags = async (tags: string[]) => {
   const imageFiles: ImageInfo[] = await Promise.all(
     (
-      await searchImagesWithTags([tag])
+      await searchImagesWithTags(tags)
     ).map(async (filePath) => {
       return {
         name: await path.basename(filePath),
@@ -175,5 +175,5 @@ export const images = {
   opendirRecursive,
   reset: () => set([]),
   search,
-  searchByTag,
+  searchByTags,
 };

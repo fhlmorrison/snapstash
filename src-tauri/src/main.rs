@@ -56,10 +56,10 @@ fn remove_tag_from_image(app_handle: AppHandle, image: &str, tag: &str) -> Resul
 
 // Search for images with tags
 #[tauri::command]
-fn search_with_tags(app_handle: AppHandle, tags: Vec<String>) -> Result<Vec<String>, String> {
+fn search_with_tags(app_handle: AppHandle, tags: Vec<&str>) -> Result<Vec<String>, String> {
     println!("Searching with tags: {:?}", tags);
     app_handle
-        .db(|db| database::search_with_tags_or(db, &tags))
+        .db(|db| database::search_with_tags_and(db, tags))
         .map_err(|e| e.to_string())
 }
 

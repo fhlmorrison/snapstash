@@ -200,23 +200,102 @@ pub fn get_image_tags_by_id(conn: &Connection, image_id: i32) -> Result<Vec<Stri
     Ok(tags)
 }
 
-pub fn search_with_tags_or(conn: &Connection, tags: &[String]) -> Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT path FROM images 
-    WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN (?1))) 
-    ORDER BY name DESC")?;
-    let tags = tags.join(",");
-    let mut rows = stmt.query_map([tags], |row| row.get(0))?;
+pub fn search_with_tags_or(conn: &Connection, tags: Vec<&str>) -> Result<Vec<String>> {
+    let placeholder = std::iter::repeat("?")
+        .take(tags.len())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let mut stmt = conn.prepare(&format!("SELECT path FROM images 
+    WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN ({}))) 
+    ORDER BY name DESC", placeholder))?;
+    let mut rows = stmt.query_map(rusqlite::params_from_iter(tags), |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
     Ok(images)
 }
 
-pub fn search_with_tags_and(conn: &Connection, tags: &[String]) -> Result<Vec<String>> {
-    !todo!("Implement search with tags and");
-    let mut stmt = conn.prepare("SELECT path FROM images 
-    WHERE id IN (SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN (?1))) 
-    ORDER BY name DESC")?;
-    let tags = tags.join(",");
-    let mut rows = stmt.query_map([tags], |row| row.get(0))?;
+pub fn search_with_tags_and(conn: &Connection, tags: Vec<&str>) -> Result<Vec<String>> {
+    // !todo!("Implement search with tags and");
+    let placeholder = std::iter::repeat("?")
+        .take(tags.len())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let mut stmt = conn.prepare(&format!(
+        "SELECT path FROM images 
+        WHERE id IN (
+        SELECT image_id FROM image_tags WHERE tag_id IN (SELECT id FROM tags WHERE name IN ({}))
+        GROUP BY image_id
+        HAVING COUNT(tag_id) = ?
+        )
+    ORDER BY name DESC",
+        placeholder
+    ))?;
+
+    let mut params: Vec<&dyn rusqlite::ToSql> =
+        tags.iter().map(|t| t as &dyn rusqlite::ToSql).collect();
+    let count = tags.len() as i64;
+    params.push(&count);
+
+    let mut rows = stmt.query_map(params.as_slice(), |row| row.get(0))?;
+    let images: Vec<String> = rows.by_ref().flatten().collect();
+    Ok(images)
+}
+
+pub fn search_with_tags_advanced(
+    conn: &Connection,
+    positive_tags: Vec<&str>,
+    negative_tags: Vec<&str>,
+) -> Result<Vec<String>> {
+    // !todo!("Implement search with tags and");
+    let positive_placeholder = std::iter::repeat("?")
+        .take(positive_tags.len())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let negative_placeholder = std::iter::repeat("?")
+        .take(negative_tags.len())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let mut stmt = conn.prepare(&format!(
+        "SELECT path
+        FROM images
+        WHERE id IN (
+            SELECT image_id
+            FROM image_tags
+            GROUP BY image_id
+            HAVING
+                COUNT(DISTINCT CASE
+                    WHEN tag_id IN (
+                        SELECT id FROM tags WHERE name IN ({})
+                    )
+                    THEN tag_id
+                END) = ?
+            AND
+                COUNT(DISTINCT CASE
+                    WHEN tag_id IN (
+                        SELECT id FROM tags WHERE name IN ({})
+                    )
+                    THEN tag_id
+                END) = 0
+        )
+        ORDER BY name DESC",
+        positive_placeholder, negative_placeholder
+    ))?;
+
+    let mut params: Vec<&dyn rusqlite::ToSql> = positive_tags
+        .iter()
+        .map(|t| t as &dyn rusqlite::ToSql)
+        .collect();
+    let positive_count = positive_tags.len() as i64;
+    params.push(&positive_count);
+
+    params.extend(negative_tags.iter().map(|t| t as &dyn rusqlite::ToSql));
+    let negative_count = 0 as i64; // Negative tags should not appear in the result
+    params.push(&negative_count);
+
+    let mut rows = stmt.query_map(params.as_slice(), |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
     Ok(images)
 }
