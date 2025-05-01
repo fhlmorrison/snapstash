@@ -84,6 +84,16 @@ function searchImagesWithTags(tags: string[]) {
   return invoke<string[]>("search_with_tags", { tags });
 }
 
+function searchImagesWithTagsAdvanced(
+  positiveTags: string[],
+  negativeTags: string[]
+) {
+  return invoke<string[]>("search_with_tags_advanced", {
+    positiveTags,
+    negativeTags,
+  });
+}
+
 // Mutual recursion for processing nested directories
 const processEntries = (entries: FileEntry[]): FileEntry[] => {
   console.log("Processing entries", entries);
@@ -166,6 +176,24 @@ const searchByTags = async (tags: string[]) => {
   set(imageFiles);
 };
 
+const searchByTagsAdvanced = async (
+  positiveTags: string[],
+  negativeTags: string[]
+) => {
+  const imageFiles: ImageInfo[] = await Promise.all(
+    (
+      await searchImagesWithTagsAdvanced(positiveTags, negativeTags)
+    ).map(async (filePath) => {
+      return {
+        name: await path.basename(filePath),
+        path: filePath,
+        src: await openImage(filePath),
+      };
+    })
+  );
+  set(imageFiles);
+};
+
 export const images = {
   subscribe,
   set,
@@ -176,4 +204,5 @@ export const images = {
   reset: () => set([]),
   search,
   searchByTags,
+  searchByTagsAdvanced,
 };

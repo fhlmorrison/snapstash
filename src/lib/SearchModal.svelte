@@ -1,6 +1,6 @@
 <script>
   import { images } from "./images";
-  import TagAdder from "./TagAdder.svelte";
+  import TagBar from "./TagBar.svelte";
 
   let open = false;
 
@@ -10,8 +10,6 @@
 
   let negativeTags = [];
   let positiveTags = [];
-
-  let showAddTag = false;
 </script>
 
 <button on:click={toggleOpen}>
@@ -21,33 +19,20 @@
 
 {#if open}
   <div class="search-menu">
-    <div class="tag-text">
-      {#each positiveTags as tag}
-        <button
-          class="tag remove-tag"
-          on:click={() => {
-            positiveTags = positiveTags.filter((t) => t !== tag);
-          }}>{tag}</button
-        >
-      {/each}
-      {#if showAddTag}
-        <div class="tag">
-          <TagAdder
-            on:close={() => {
-              showAddTag = false;
-            }}
-            on:addTag={({ detail: tag }) => {
-              positiveTags = [...positiveTags, tag];
-            }}
-          />
-        </div>
-      {:else}
-        <button on:click={() => (showAddTag = true)} class="tag add-tag"
-          >+</button
-        >
-      {/if}
+    <div>
+      Positive Tags
+      <TagBar bind:tags={positiveTags} />
     </div>
-    <button on:click={() => images.searchByTags(positiveTags)}> Search </button>
+    <div>
+      Negative Tags
+      <TagBar bind:tags={negativeTags} />
+    </div>
+    <!-- <button on:click={() => images.searchByTags(positiveTags)}> Search </button> -->
+    <button
+      on:click={() => images.searchByTagsAdvanced(positiveTags, negativeTags)}
+    >
+      Search
+    </button>
   </div>
 {/if}
 

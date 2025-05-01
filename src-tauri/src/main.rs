@@ -63,6 +63,22 @@ fn search_with_tags(app_handle: AppHandle, tags: Vec<&str>) -> Result<Vec<String
         .map_err(|e| e.to_string())
 }
 
+// Search for images with tags advanced
+#[tauri::command]
+fn search_with_tags_advanced(
+    app_handle: AppHandle,
+    positive_tags: Vec<&str>,
+    negative_tags: Vec<&str>,
+) -> Result<Vec<String>, String> {
+    println!(
+        "Searching with positive tags: {:?} and negative tags: {:?}",
+        positive_tags, negative_tags
+    );
+    app_handle
+        .db(|db| database::search_with_tags_advanced(db, positive_tags, negative_tags))
+        .map_err(|e| e.to_string())
+}
+
 // Add tag to images that have the tag word in their prompt parameters
 #[tauri::command]
 fn auto_tag(
@@ -175,6 +191,7 @@ fn main() {
             add_tag_to_image,
             remove_tag_from_image,
             search_with_tags,
+            search_with_tags_advanced,
         ])
         .setup(|app| {
             let handle = app.handle();
