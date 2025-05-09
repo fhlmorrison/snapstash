@@ -1,17 +1,19 @@
 <script lang="ts">
   import ImageModal from "./lib/ImageModal.svelte";
   import ImageSquare from "./lib/ImageSquare.svelte";
-  import { openImageDialogue, images, type ImageInfo } from "./lib/images";
+  import { images, type ImageInfo } from "./lib/images";
   import SearchBar from "./lib/SearchBar.svelte";
   import TagModal from "./lib/TagModal.svelte";
   import SearchModal from "./lib/SearchModal.svelte";
-
-  let imgUrl: string = "";
 
   let selectedIndex = 0;
 
   let selected: ImageInfo | null;
   let expanded: boolean;
+
+  $: isSingleImage = $images.length === 1;
+
+  $: console.log($images);
 
   $: selected = $images[selectedIndex];
 
@@ -24,10 +26,6 @@
     selectedIndex = event.detail;
   };
 
-  const getImage = async () => {
-    imgUrl = (await openImageDialogue()) || "";
-  };
-
   const searchNew = async (e) => {
     images.search(e.detail);
   };
@@ -35,7 +33,7 @@
 
 <main class="container">
   <div id="open-buttons">
-    <button on:click={getImage}>Open Image</button>
+    <button on:click={images.openImage}>Open Image</button>
     <button on:click={images.opendir}>Open Directory</button>
     <button on:click={images.opendirRecursive}
       >Open Directory (Recursive)</button
@@ -51,43 +49,33 @@
   <SearchModal />
   <TagModal />
 
-  {#if imgUrl}
-    <div class="image-frame">
-      <div
-        class="x"
-        on:click={() => {
-          imgUrl = "";
-        }}
-        on:keydown={(event) => {
-          if (event.key === "Delete") {
-            imgUrl = "";
-          }
-        }}
-      >
-        x
+  {#if isSingleImage}
+    <div id="single-image">
+      <div class="image-frame">
+        <ImageSquare
+          index={0}
+          src={$images[0].src}
+          path={$images[0].path}
+          name={$images[0].name}
+          on:expand={expandImage}
+          on:select={selectImage}
+        />
       </div>
-      <ImageSquare
-        src={imgUrl}
-        name="image"
-        on:expand={(image) => {
-          expanded = image.detail;
-        }}
-      />
+    </div>
+  {:else}
+    <div class="image-grid">
+      {#each $images as image, index}
+        <ImageSquare
+          {index}
+          src={image.src}
+          path={image.path}
+          name={image.name}
+          on:expand={expandImage}
+          on:select={selectImage}
+        />
+      {/each}
     </div>
   {/if}
-
-  <div class="image-grid">
-    {#each $images as image, index}
-      <ImageSquare
-        {index}
-        src={image.src}
-        name={image.name}
-        path={image.path}
-        on:expand={expandImage}
-        on:select={selectImage}
-      />
-    {/each}
-  </div>
 </main>
 
 {#if expanded}
@@ -123,18 +111,16 @@
     gap: 1em;
   }
 
-  .x {
+  #single-image {
     display: flex;
-    position: absolute;
-    justify-content: right;
-    right: 0;
-    top: 0;
-    padding: 0 0.5rem 0 0;
-    cursor: pointer;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
   }
 
   .image-frame {
+    width: clamp(200px, 100%, 50vh);
     position: relative;
-    border: 1px solid black;
+    padding: 5px;
   }
 </style>

@@ -17,10 +17,10 @@ export async function openImageDialogue() {
       },
     ],
   })) as string;
-  return file ? convertFileSrc(file) : "";
+  return file;
 }
 
-async function openImage(fileName: string) {
+async function openImageFile(fileName: string) {
   const newFileName = convertFileSrc(fileName);
   // console.log(newFileName);
   return newFileName;
@@ -115,6 +115,20 @@ const save = () => {
   return saveImages(files);
 };
 
+const openImage = async () => {
+  const filePath = await openImageDialogue();
+  console.log("Selected file:", filePath);
+  if (filePath) {
+    set([
+      {
+        name: await path.basename(filePath),
+        path: filePath,
+        src: await openImageFile(filePath),
+      },
+    ]);
+  }
+};
+
 const opendir = async () => {
   const dir = await openDirectory();
   console.log("Selected directory:", dir);
@@ -124,7 +138,7 @@ const opendir = async () => {
       files.map(async ({ name, path }) => ({
         name,
         path,
-        src: await openImage(path),
+        src: await openImageFile(path),
       }))
     );
     set(mappedImages);
@@ -139,7 +153,7 @@ const opendirRecursive = async () => {
       files.map(async ({ name, path }) => ({
         name,
         path,
-        src: await openImage(path),
+        src: await openImageFile(path),
       }))
     );
     set(mappedImages);
@@ -154,7 +168,7 @@ const search = async (queryText: string) => {
       return {
         name: await path.basename(filePath),
         path: filePath,
-        src: await openImage(filePath),
+        src: await openImageFile(filePath),
       };
     })
   );
@@ -169,7 +183,7 @@ const searchByTags = async (tags: string[]) => {
       return {
         name: await path.basename(filePath),
         path: filePath,
-        src: await openImage(filePath),
+        src: await openImageFile(filePath),
       };
     })
   );
@@ -187,7 +201,7 @@ const searchByTagsAdvanced = async (
       return {
         name: await path.basename(filePath),
         path: filePath,
-        src: await openImage(filePath),
+        src: await openImageFile(filePath),
       };
     })
   );
@@ -199,6 +213,7 @@ export const images = {
   set,
   update,
   save,
+  openImage,
   opendir,
   opendirRecursive,
   reset: () => set([]),
