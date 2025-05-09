@@ -292,8 +292,6 @@ pub fn search_with_tags_advanced(
     params.push(&positive_count);
 
     params.extend(negative_tags.iter().map(|t| t as &dyn rusqlite::ToSql));
-    let negative_count = 0 as i64; // Negative tags should not appear in the result
-    params.push(&negative_count);
 
     let mut rows = stmt.query_map(params.as_slice(), |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
