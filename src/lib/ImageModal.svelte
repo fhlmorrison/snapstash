@@ -158,6 +158,7 @@
     z-index: 2;
     color: #fff;
     width: calc(100% - 50px);
+    pointer-events: none;
   }
 
   .next,
@@ -196,14 +197,16 @@
 
   .title {
     max-height: 1.5rem;
-    pointer-events: none;
+    pointer-events: stroke;
     padding: 0;
+    width: fit-content;
   }
 
   .parameter-box {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
+    pointer-events: all;
   }
   .parameter-text,
   .tag-text {
