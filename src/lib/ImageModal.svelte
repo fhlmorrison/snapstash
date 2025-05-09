@@ -156,7 +156,6 @@
     left: 0;
     padding: 1rem;
     z-index: 2;
-    pointer-events: none;
     color: #fff;
     width: calc(100% - 50px);
   }
@@ -197,6 +196,7 @@
 
   .title {
     max-height: 1.5rem;
+    pointer-events: none;
     padding: 0;
   }
 
