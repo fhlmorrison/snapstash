@@ -13,9 +13,14 @@
 
   $: isSingleImage = $images.length === 1;
 
-  $: console.log($images);
+  let filterString = "";
+  $: filteredImages = $images.filter(
+    (image) =>
+      image.name.toLowerCase().includes(filterString.toLowerCase()) ||
+      image.path.toLowerCase().includes(filterString.toLowerCase())
+  );
 
-  $: selected = $images[selectedIndex];
+  $: selected = filteredImages[selectedIndex];
 
   const expandImage = (event: CustomEvent<number>) => {
     selectedIndex = event.detail;
@@ -44,8 +49,13 @@
       >Close Directory
     </button>
     <button class="save-button" on:click={images.save}> Save Images </button>
+    <input
+      type="text"
+      bind:value={filterString}
+      placeholder="Filter by name or path"
+    />
   {/if}
-  <SearchBar on:search={searchNew} />
+  <!-- <SearchBar on:search={searchNew} /> -->
   <SearchModal />
   <TagModal />
 
@@ -64,7 +74,7 @@
     </div>
   {:else}
     <div class="image-grid">
-      {#each $images as image, index}
+      {#each filteredImages as image, index}
         <ImageSquare
           {index}
           src={image.src}
@@ -85,10 +95,11 @@
     path={selected?.path}
     on:close={expandImage}
     on:next={() => {
-      selectedIndex = (selectedIndex + 1) % $images.length;
+      selectedIndex = (selectedIndex + 1) % filteredImages.length;
     }}
     on:prev={() => {
-      selectedIndex = (selectedIndex - 1 + $images.length) % $images.length;
+      selectedIndex =
+        (selectedIndex - 1 + filteredImages.length) % filteredImages.length;
     }}
   />
 {/if}
