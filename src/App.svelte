@@ -38,28 +38,30 @@
 </script>
 
 <main class="container">
-  <div id="open-buttons">
-    <button on:click={images.openImage}>Open Image</button>
-    <button on:click={images.opendir}>Open Directory</button>
-    <button on:click={images.opendirRecursive}
-      >Open Directory (Recursive)</button
-    >
-    <button on:click={images.openREFile}>Open RE</button>
+  <div id="button-section">
+    <div id="open-buttons">
+      <button on:click={images.openImage}>Open Image</button>
+      <button on:click={images.opendir}>Open Directory</button>
+      <button on:click={images.opendirRecursive}
+        >Open Directory (Recursive)</button
+      >
+      <button on:click={images.openREFile}>Open RE</button>
+    </div>
+    {#if $images.length > 0}
+      <button class="clear-button" on:click={images.reset}
+        >Close Directory
+      </button>
+      <button class="save-button" on:click={images.save}> Save Images </button>
+      <input
+        type="text"
+        bind:value={filterString}
+        placeholder="Filter by name or path"
+      />
+    {/if}
+    <!-- <SearchBar on:search={searchNew} /> -->
+    <SearchModal />
+    <TagModal />
   </div>
-  {#if $images.length > 0}
-    <button class="clear-button" on:click={images.reset}
-      >Close Directory
-    </button>
-    <button class="save-button" on:click={images.save}> Save Images </button>
-    <input
-      type="text"
-      bind:value={filterString}
-      placeholder="Filter by name or path"
-    />
-  {/if}
-  <!-- <SearchBar on:search={searchNew} /> -->
-  <SearchModal />
-  <TagModal />
 
   {#if isSingleImage}
     <div id="single-image">
@@ -114,9 +116,15 @@
 
   #open-buttons {
     display: grid;
-    grid-template-columns: repeat(3, minmax(200px, 1fr));
-    gap: 0.5em;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    gap: 1px;
     width: 100%;
+  }
+
+  #button-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
   }
 
   .image-grid {
