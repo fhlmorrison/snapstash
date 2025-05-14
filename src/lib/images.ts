@@ -106,7 +106,13 @@ const processEntry = ({ children, name, path }: FileEntry): FileEntry[] => {
 };
 
 // Image Store
-export type ImageInfo = { src: string; name: string; path: string };
+export type ImageInfo = {
+  src: string;
+  name: string;
+  path: string;
+  subreddit?: string;
+  threadUrl?: string;
+};
 
 const { subscribe, set, update } = writable<ImageInfo[]>([]);
 
