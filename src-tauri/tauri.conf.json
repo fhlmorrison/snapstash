@@ -32,7 +32,7 @@
         "createDir": false,
         "exists": false,
         "readDir": true,
-        "readFile": false,
+        "readFile": true,
         "removeDir": false,
         "removeFile": false,
         "renameFile": false,

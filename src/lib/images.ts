@@ -1,6 +1,6 @@
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { open } from "@tauri-apps/api/dialog";
-import { readDir } from "@tauri-apps/api/fs";
+import { readDir, readTextFile } from "@tauri-apps/api/fs";
 import type { FileEntry } from "@tauri-apps/api/fs";
 import { invoke, path } from "@tauri-apps/api";
 import { writable, get } from "svelte/store";
@@ -208,6 +208,42 @@ const searchByTagsAdvanced = async (
   set(imageFiles);
 };
 
+async function readImgesFromRMExportFile(src: string) {}
+
+async function readImgesFromREFile() {}
+
+async function openImgesFromREFile() {
+  const file = await open({
+    multiple: false,
+    filters: [
+      {
+        name: "text",
+        extensions: ["txt"],
+      },
+    ],
+  });
+
+  if (file) {
+    const content = await readTextFile(file as string);
+    console.log("File content:", content);
+    const lines = content.split("\n");
+    console.log("Lines:", lines);
+    const entries = lines
+      .filter((e) => e.length > 0)
+      .map((line) => {
+        const [_, url, subreddit, __, title, threadUrl] = line.split("|");
+        return {
+          name: title,
+          src: url,
+          path: "",
+          subreddit: subreddit,
+          threadUrl: threadUrl,
+        };
+      });
+    set(entries);
+  }
+}
+
 export const images = {
   subscribe,
   set,
@@ -220,4 +256,5 @@ export const images = {
   search,
   searchByTags,
   searchByTagsAdvanced,
+  openREFile: openImgesFromREFile,
 };

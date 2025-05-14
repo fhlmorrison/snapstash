@@ -13,9 +13,16 @@
 
   $: isSingleImage = $images.length === 1;
 
-  $: console.log($images);
+  // $: console.log($images);
 
-  $: selected = $images[selectedIndex];
+  $: selected = filteredImages[selectedIndex];
+
+  let filterString = "";
+  $: filteredImages = $images.filter(
+    (image) =>
+      image.name.toLowerCase().includes(filterString.toLowerCase()) ||
+      image.subreddit.toLowerCase().includes(filterString.toLowerCase())
+  );
 
   const expandImage = (event: CustomEvent<number>) => {
     selectedIndex = event.detail;
@@ -38,6 +45,7 @@
     <button on:click={images.opendirRecursive}
       >Open Directory (Recursive)</button
     >
+    <button on:click={images.openREFile}>Open RE</button>
   </div>
   {#if $images.length > 0}
     <button class="clear-button" on:click={images.reset}
@@ -45,6 +53,7 @@
     </button>
     <button class="save-button" on:click={images.save}> Save Images </button>
   {/if}
+  <input type="text" placeholder="Search by name" bind:value={filterString} />
   <SearchBar on:search={searchNew} />
   <SearchModal />
   <TagModal />
@@ -64,7 +73,7 @@
     </div>
   {:else}
     <div class="image-grid">
-      {#each $images as image, index}
+      {#each filteredImages as image, index}
         <ImageSquare
           {index}
           src={image.src}
@@ -81,14 +90,16 @@
 {#if expanded}
   <ImageModal
     src={selected?.src}
-    alt={selected?.name}
+    alt={selected?.name +
+      (selected?.subreddit ? ` (${selected?.subreddit})` : "")}
     path={selected?.path}
     on:close={expandImage}
     on:next={() => {
-      selectedIndex = (selectedIndex + 1) % $images.length;
+      selectedIndex = (selectedIndex + 1) % filteredImages.length;
     }}
     on:prev={() => {
-      selectedIndex = (selectedIndex - 1 + $images.length) % $images.length;
+      selectedIndex =
+        (selectedIndex - 1 + filteredImages.length) % filteredImages.length;
     }}
   />
 {/if}
