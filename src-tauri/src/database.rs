@@ -259,28 +259,25 @@ pub fn search_with_tags_advanced(
         .join(",");
 
     let mut stmt = conn.prepare(&format!(
-        "SELECT path
-        FROM images
-        WHERE id IN (
-            SELECT image_id
-            FROM image_tags
-            GROUP BY image_id
-            HAVING
-                COUNT(DISTINCT CASE
-                    WHEN tag_id IN (
-                        SELECT id FROM tags WHERE name IN ({})
-                    )
-                    THEN tag_id
-                END) = ?
+        "SELECT i.path
+        FROM images i
+        LEFT JOIN image_tags it ON i.id = it.image_id
+        LEFT JOIN tags t ON it.tag_id = t.id
+        GROUP BY i.id, i.path
+        HAVING
+            COUNT(DISTINCT CASE
+                -- This part counts the number of matching tags
+                WHEN t.name IN ({}) THEN t.id
+            END) = ?
             AND
-                COUNT(DISTINCT CASE
-                    WHEN tag_id IN (
-                        SELECT id FROM tags WHERE name IN ({})
-                    )
-                    THEN tag_id
-                END) = 0
-        )
-        ORDER BY name DESC",
+            -- This part ensures there are no tags from the exclusion list
+            COUNT(DISTINCT CASE
+                WHEN t.name IN ({}) THEN t.id
+            END) = 0
+            -- AND
+            -- This condition handles the case with no tags provided in the first set
+            -- (? = 0 AND COUNT(it.tag_id) = 0) OR (? > 0)
+        ORDER BY i.name DESC;",
         positive_placeholder, negative_placeholder
     ))?;
 
@@ -292,6 +289,8 @@ pub fn search_with_tags_advanced(
     params.push(&positive_count);
 
     params.extend(negative_tags.iter().map(|t| t as &dyn rusqlite::ToSql));
+    // params.push(&positive_count);
+    // params.extend(negative_tags.iter().map(|t| t as &dyn rusqlite::ToSql));
 
     let mut rows = stmt.query_map(params.as_slice(), |row| row.get(0))?;
     let images: Vec<String> = rows.by_ref().flatten().collect();
