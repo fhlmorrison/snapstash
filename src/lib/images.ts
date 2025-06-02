@@ -3,7 +3,7 @@ import { open } from "@tauri-apps/api/dialog";
 import { readDir, readTextFile } from "@tauri-apps/api/fs";
 import type { FileEntry } from "@tauri-apps/api/fs";
 import { invoke, path } from "@tauri-apps/api";
-import { writable, get } from "svelte/store";
+import { writable, get, derived } from "svelte/store";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4", "webm"];
 
@@ -264,3 +264,29 @@ export const images = {
   searchByTagsAdvanced,
   openREFile: openImgesFromREFile,
 };
+
+export const selection = writable<{ anchor: number; indices: Set<number> }>({
+  anchor: -1,
+  indices: new Set(),
+});
+
+export const selectedImages = derived(
+  [images, selection],
+  ([$images, $selection]) => {
+    return $images.filter((_, index) => $selection.indices.has(index));
+  }
+);
+
+export const filter = writable("");
+
+export const filteredImages = derived(
+  [images, filter],
+  ([$images, $filter]) => {
+    return $images.filter(
+      (image) =>
+        image.name.toLowerCase().includes($filter.toLowerCase()) ||
+        image.path.toLowerCase().includes($filter.toLowerCase()) ||
+        image.subreddit.toLowerCase().includes($filter.toLowerCase())
+    );
+  }
+);

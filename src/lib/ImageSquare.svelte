@@ -9,10 +9,11 @@
   export let name: string = "";
   export let tabindex: number = 0;
   export let index: number = 0;
+  export let selected: boolean = false;
 
-  export let onClick = () => {
+  export let onClick = (e: { shiftKey: any; ctrlKey: any }) => {
     // openImageDialogue();
-    dispatch("select", index);
+    dispatch("select", { index, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey });
   };
 
   let video;
@@ -40,13 +41,11 @@
 
 <div
   class="image-square"
+  style={`outline: ${selected ? "solid 2px blue" : "none"}`}
   role="button"
   on:click={onClick}
   on:keydown={keyPressed}
   {tabindex}
-  on:focus={() => {
-    dispatch("select", index);
-  }}
 >
   <div class="expand" on:click={expand}>
     <FaExpand />
@@ -76,9 +75,9 @@
     position: relative;
   }
 
-  .image-square:focus {
+  /* .image-square:focus {
     outline: solid 2px blue;
-  }
+  } */
 
   .image-square:hover {
     opacity: 0.9;

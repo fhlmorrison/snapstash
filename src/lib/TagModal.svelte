@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { tags } from "./tags";
-  import { images } from "./images";
+  import { filteredImages, images, selectedImages } from "./images";
 
   const addTag = () => {
     tags.create(pendingTag);
@@ -36,28 +36,35 @@
   <div class="tag-menu">
     <!-- markup (zero or more items) goes here -->
     <button on:click={tags.refresh}>Refresh Tags</button>
-    <label for="auto-tag"
+    <!-- <label for="auto-tag"
       >Strict
       <input type="checkbox" id="auto-tag" bind:checked={strict} />
-    </label>
+    </label> -->
     <div class="taglist">
       {#each filteredTags as tag}
         <div class="tag">
           {tag}
-          <button
+          <!-- <button
             on:click={() =>
               tags.autoTag(
                 tag,
                 $images.map((i) => i.path),
                 strict
               )}>AutoTag</button
+          > -->
+          <button
+            on:click={() =>
+              tags.tagAllImages(
+                tag,
+                $filteredImages.map((i) => i.path)
+              )}>Tag All</button
           >
           <button
             on:click={() =>
               tags.tagAllImages(
                 tag,
-                $images.map((i) => i.path)
-              )}>Tag All</button
+                $selectedImages.map((i) => i.path)
+              )}>Tag Selected</button
           >
           <button on:click={() => images.searchByTags([tag])}
             >Open Tagged</button
