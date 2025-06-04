@@ -69,9 +69,19 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid black;
+    border: 2px solid black;
     cursor: pointer;
     position: relative;
+    /* background: radial-gradient(
+      circle at center,
+      rgba(0, 0, 0, 0.9),
+      rgba(255, 255, 255, 0.5)
+    ); */
+  }
+
+  .image-square.selected {
+    outline: solid 2px #72abff;
+    border: 2px solid #72abff;
   }
 
   /* .image-square:focus {
@@ -80,7 +90,7 @@
 
   .image-square:hover {
     opacity: 0.9;
-    border: solid 1px #396cd8;
+    border: solid 2px #396cd8;
   }
 
   .image-square:hover .expand {
@@ -93,6 +103,7 @@
     height: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
+    /* object-fit: contain; */
   }
 
   .image-square video {
@@ -100,6 +111,7 @@
     height: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
+    /* object-fit: contain; */
   }
 
   .expand {
@@ -129,9 +141,5 @@
 
   .expand:hover {
     background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  .selected {
-    outline: solid 2px #396cd8;
   }
 </style>
