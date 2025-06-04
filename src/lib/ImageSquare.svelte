@@ -40,8 +40,7 @@
 </script>
 
 <div
-  class="image-square"
-  style={`outline: ${selected ? "solid 2px blue" : "none"}`}
+  class={`image-square ${selected ? "selected" : ""}`}
   role="button"
   on:click={onClick}
   on:keydown={keyPressed}
@@ -130,5 +129,9 @@
 
   .expand:hover {
     background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .selected {
+    outline: solid 2px #396cd8;
   }
 </style>

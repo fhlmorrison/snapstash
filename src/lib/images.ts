@@ -1,9 +1,11 @@
-import { convertFileSrc } from "@tauri-apps/api/tauri";
-import { open } from "@tauri-apps/api/dialog";
-import { readDir, readTextFile } from "@tauri-apps/api/fs";
-import type { FileEntry } from "@tauri-apps/api/fs";
-import { invoke, path } from "@tauri-apps/api";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+import { BaseDirectory, readDir, readTextFile } from "@tauri-apps/plugin-fs";
+import type { DirEntry, FileHandle } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
+import { path } from "@tauri-apps/api";
 import { writable, get, derived } from "svelte/store";
+import { join } from "@tauri-apps/api/path";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4", "webm"];
 
@@ -37,17 +39,17 @@ async function openDirectory() {
 }
 
 async function readDirImages(dirPath: string) {
-  const entries: FileEntry[] = await readDir(dirPath);
+  const entries: DirEntry[] = await readDir(dirPath);
   // console.log(`Read entries from ${dirPath}`, entries);
-  return processEntries(entries)
+  return (await processEntries(dirPath, entries))
     .filter((entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
     .reverse();
 }
 
 async function readDirImagesRecursive(dirPath: string) {
-  const entries: FileEntry[] = await readDir(dirPath, { recursive: true });
+  const entries: DirEntry[] = await readDir(dirPath);
   // console.log(`Read entries from ${dirPath}`, entries);
-  return processEntries(await entries)
+  return (await processEntriesRecursively(dirPath, entries))
     .filter((entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
     .reverse();
 }
@@ -94,16 +96,57 @@ function searchImagesWithTagsAdvanced(
   });
 }
 
-// Mutual recursion for processing nested directories
-const processEntries = (entries: FileEntry[]): FileEntry[] => {
-  console.log("Processing entries", entries);
-  return entries.flatMap((entry) => processEntry(entry));
-};
+async function processEntriesRecursively(parent: string, entries: DirEntry[]) {
+  const fileEntryPromises = entries.map(async (entry) => {
+    const entryPath = await join(parent, entry.name);
 
-const processEntry = ({ children, name, path }: FileEntry): FileEntry[] => {
-  console.log("Processing entry", { name, path, children });
-  return [{ name, path }, ...processEntries(children ?? [])];
-};
+    if (entry.isDirectory) {
+      const subDirEntries = await readDir(entryPath);
+      return await processEntriesRecursively(entryPath, subDirEntries);
+    } else {
+      return [
+        {
+          name: entry.name,
+          path: entryPath,
+          src: convertFileSrc(entryPath),
+        },
+      ];
+    }
+  });
+
+  // Await all promises and then flatten the resulting array of arrays
+  const nestedResults = await Promise.all(fileEntryPromises);
+  return nestedResults.flat();
+}
+
+async function processEntries(parent: string, entries: DirEntry[]) {
+  return Promise.all(
+    entries
+      .filter((e) => e.isFile)
+      .map(async (entry) => {
+        const path = await join(parent, entry.name);
+        return {
+          name: entry.name,
+          path,
+          src: convertFileSrc(path),
+        };
+      })
+  );
+}
+
+// Mutual recursion for processing nested directories
+// const processEntries = (entries: DirEntry[]): DirEntry[] => {
+//   console.log("Processing entries", entries);
+//   return entries.flatMap((entry) => processEntry(entry));
+// };
+
+// const processEntry = ({ name, isDirectory }: DirEntry): DirEntry[] => {
+//   if (!isDirectory) {
+//     return [];
+//   }
+//   console.log("Processing entry", { name, path, children });
+//   return [{ name, path }, ...processEntries(children ?? [])];
+// };
 
 // Image Store
 export type ImageInfo = {

@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 pub struct AppState {
     pub db: std::sync::Mutex<Option<Connection>>,
@@ -19,7 +19,7 @@ pub struct DbImage {
 
 pub fn init_db(handle: &AppHandle) -> Result<Connection> {
     let dir = handle
-        .path_resolver()
+        .path()
         .app_data_dir()
         .expect("failed to get config dir");
 
