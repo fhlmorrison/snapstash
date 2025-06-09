@@ -86,7 +86,8 @@
 <style>
   .image-square {
     width: 100%;
-    height: 100%;
+    /* height: 100%; */
+    height: fit-content;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -121,16 +122,16 @@
 
   .image-square img {
     width: 100%;
-    height: 100%;
-    aspect-ratio: 1 / 1;
+    /* height: 100%; */
+    /* aspect-ratio: 1 / 1; */
     object-fit: cover;
     /* object-fit: contain; */
   }
 
   .image-square video {
     width: 100%;
-    height: 100%;
-    aspect-ratio: 1 / 1;
+    /* height: 100%; */
+    /* aspect-ratio: 1 / 1; */
     object-fit: cover;
     /* object-fit: contain; */
   }

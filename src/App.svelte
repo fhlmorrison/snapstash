@@ -8,9 +8,9 @@
     filteredImages,
     filter,
   } from "./lib/images";
-  import SearchBar from "./lib/SearchBar.svelte";
   import TagModal from "./lib/TagModal.svelte";
   import SearchModal from "./lib/SearchModal.svelte";
+  import Masonry from "./lib/Masonry.svelte";
 
   // let selectedIndex = 0;
   // let selectedIndices: Set<number> = new Set();
@@ -55,6 +55,8 @@
   // const searchNew = async (e) => {
   //   images.search(e.detail);
   // };
+
+  let filteredIndices = $derived([...Array($filteredImages.length).keys()]);
 </script>
 
 <main class="container">
@@ -98,7 +100,7 @@
       </div>
     </div>
   {:else}
-    <div class="image-grid">
+    <!-- <div class="image-grid">
       {#each $filteredImages as image, index}
         <ImageSquare
           {index}
@@ -110,7 +112,22 @@
           onSelect={selectImage}
         />
       {/each}
-    </div>
+    </div> -->
+    <Masonry items={filteredIndices} idKey="path">
+      {#snippet children({ item }: { item: number })}
+        <div class="image-frame">
+          <ImageSquare
+            index={item}
+            selected={$selection.indices.has(item)}
+            src={$filteredImages[item].src ?? ""}
+            path={$filteredImages[item].path}
+            name={$filteredImages[item].name}
+            onExpand={expandImage}
+            onSelect={selectImage}
+          />
+        </div>
+      {/snippet}
+    </Masonry>
   {/if}
 </main>
 
