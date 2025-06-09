@@ -1,19 +1,24 @@
-<script>
-    import { createEventDispatcher } from "svelte";
+<script lang="ts">
+  import { createEventDispatcher } from "svelte";
 
-    export let value = "";
-    const dipatch = createEventDispatcher();
+  interface Props {
+    value?: string;
+    onSubmit?: (value: string) => void;
+  }
 
-    const submit = () => {
-        dipatch("search", value);
-    };
+  let { value = $bindable(""), onSubmit }: Props = $props();
+  const dipatch = createEventDispatcher();
+
+  const submit = () => {
+    onSubmit?.(value);
+  };
 </script>
 
 <div
-    on:keypress={(e) => {
-        if (e.key == "Enter") submit();
-    }}
+  onkeypress={(e) => {
+    if (e.key == "Enter") submit();
+  }}
 >
-    <input type="text" bind:value />
-    <button on:click={submit}>Search</button>
+  <input type="text" bind:value />
+  <button onclick={submit}>Search</button>
 </div>

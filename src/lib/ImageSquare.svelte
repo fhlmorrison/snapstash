@@ -4,19 +4,40 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
-  export let src: string = "";
-  export let path: string = "";
-  export let name: string = "";
-  export let tabindex: number = 0;
-  export let index: number = 0;
-  export let selected: boolean = false;
+  export interface onSelectEvent {
+    index: number;
+    shiftKey: boolean;
+    ctrlKey: boolean;
+  }
 
-  export let onClick = (e: { shiftKey: any; ctrlKey: any }) => {
+  interface Props {
+    src?: string;
+    path?: string;
+    name?: string;
+    tabindex?: number;
+    index?: number;
+    selected?: boolean;
+    onExpand?: (index: number) => void;
+    onSelect?: (e: onSelectEvent) => void;
+  }
+
+  let {
+    src = "",
+    path = "",
+    name = "",
+    tabindex = 0,
+    index = 0,
+    selected = false,
+    onExpand,
+    onSelect,
+  }: Props = $props();
+
+  let onClick = (e: { shiftKey: any; ctrlKey: any }) => {
     // openImageDialogue();
-    dispatch("select", { index, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey });
+    onSelect?.({ index, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey });
   };
 
-  let video;
+  let video: HTMLVideoElement | undefined = $state();
 
   const play = () => {
     if (!video) return;
@@ -28,11 +49,11 @@
     }
   };
 
-  $: isVideo = path.includes(".mp4") || path.includes(".webm");
+  let isVideo = $derived(path.includes(".mp4") || path.includes(".webm"));
 
-  const expand = () => dispatch("expand", index);
+  const expand = () => onExpand?.(index);
 
-  const keyPressed = (event) => {
+  const keyPressed = (event: KeyboardEvent) => {
     if (event.key === "Enter") {
       expand();
     }
@@ -42,17 +63,17 @@
 <div
   class={`image-square ${selected ? "selected" : ""}`}
   role="button"
-  on:click={onClick}
-  on:keydown={keyPressed}
+  onclick={onClick}
+  onkeydown={keyPressed}
   {tabindex}
 >
-  <div class="expand" on:click={expand}>
+  <div class="expand" onclick={expand}>
     <FaExpand />
   </div>
 
   {#if isVideo}
-    <video {src} bind:this={video} muted />
-    <div class="overlay" on:click={play}>
+    <video {src} bind:this={video} muted></video>
+    <div class="overlay" onclick={play}>
       <FaPlay />
     </div>
   {:else}

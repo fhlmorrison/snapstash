@@ -2,17 +2,17 @@
   import { images } from "./images";
   import TagBar from "./TagBar.svelte";
 
-  let open = false;
+  let open = $state(false);
 
   const toggleOpen = () => {
     open = !open;
   };
 
-  let negativeTags = [];
-  let positiveTags = [];
+  let negativeTags = $state([]);
+  let positiveTags = $state([]);
 </script>
 
-<button on:click={toggleOpen}>
+<button onclick={toggleOpen}>
   <span class="toggle-triangle">{open ? "▼" : "▶"}</span>
   Advanced Search
 </button>
@@ -29,7 +29,7 @@
     </div>
     <!-- <button on:click={() => images.searchByTags(positiveTags)}> Search </button> -->
     <button
-      on:click={() => images.searchByTagsAdvanced(positiveTags, negativeTags)}
+      onclick={() => images.searchByTagsAdvanced(positiveTags, negativeTags)}
     >
       Search
     </button>

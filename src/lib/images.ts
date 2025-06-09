@@ -96,7 +96,10 @@ function searchImagesWithTagsAdvanced(
   });
 }
 
-async function processEntriesRecursively(parent: string, entries: DirEntry[]) {
+async function processEntriesRecursively(
+  parent: string,
+  entries: DirEntry[]
+): Promise<ImageInfo[]> {
   const fileEntryPromises = entries.map(async (entry) => {
     const entryPath = await join(parent, entry.name);
 
@@ -329,7 +332,7 @@ export const filteredImages = derived(
       (image) =>
         image.name.toLowerCase().includes($filter.toLowerCase()) ||
         image.path.toLowerCase().includes($filter.toLowerCase()) ||
-        image.subreddit.toLowerCase().includes($filter.toLowerCase())
+        image.subreddit?.toLowerCase().includes($filter.toLowerCase())
     );
   }
 );

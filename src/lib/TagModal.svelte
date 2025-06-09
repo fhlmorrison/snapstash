@@ -8,11 +8,8 @@
     tags.refresh();
   };
 
-  $: filteredTags = $tags.filter((tag) =>
-    tag.toLowerCase().includes(pendingTag.toLowerCase())
-  );
 
-  let open = false;
+  let open = $state(false);
 
   let strict = true;
 
@@ -24,10 +21,13 @@
     tags.refresh();
   });
 
-  let pendingTag = "";
+  let pendingTag = $state("");
+  let filteredTags = $derived($tags.filter((tag) =>
+    tag.toLowerCase().includes(pendingTag.toLowerCase())
+  ));
 </script>
 
-<button on:click={toggleOpen}>
+<button onclick={toggleOpen}>
   <span class="toggle-triangle">{open ? "▼" : "▶"}</span>
   Tags
 </button>
@@ -35,7 +35,7 @@
 {#if open}
   <div class="tag-menu">
     <!-- markup (zero or more items) goes here -->
-    <button on:click={tags.refresh}>Refresh Tags</button>
+    <button onclick={tags.refresh}>Refresh Tags</button>
     <!-- <label for="auto-tag"
       >Strict
       <input type="checkbox" id="auto-tag" bind:checked={strict} />
@@ -53,27 +53,27 @@
               )}>AutoTag</button
           > -->
           <button
-            on:click={() =>
+            onclick={() =>
               tags.tagAllImages(
                 tag,
                 $filteredImages.map((i) => i.path)
               )}>Tag All</button
           >
           <button
-            on:click={() =>
+            onclick={() =>
               tags.tagAllImages(
                 tag,
                 $selectedImages.map((i) => i.path)
               )}>Tag Selected</button
           >
-          <button on:click={() => images.searchByTags([tag])}
+          <button onclick={() => images.searchByTags([tag])}
             >Open Tagged</button
           >
         </div>
       {/each}
     </div>
     <input type="text" bind:value={pendingTag} />
-    <button on:click={addTag}>Add Tag</button>
+    <button onclick={addTag}>Add Tag</button>
   </div>
 {/if}
 

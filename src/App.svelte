@@ -1,6 +1,6 @@
 <script lang="ts">
   import ImageModal from "./lib/ImageModal.svelte";
-  import ImageSquare from "./lib/ImageSquare.svelte";
+  import ImageSquare, { type onSelectEvent } from "./lib/ImageSquare.svelte";
   import {
     images,
     type ImageInfo,
@@ -15,43 +15,36 @@
   // let selectedIndex = 0;
   // let selectedIndices: Set<number> = new Set();
 
-  let selected: ImageInfo | null;
-  let expanded: boolean;
+  let selected: ImageInfo | null = $derived($filteredImages[$selection.anchor]);
+  let expanded: boolean = $state(false);
 
-  $: isSingleImage = $images.length === 1;
+  let isSingleImage = $derived($images.length === 1);
 
-  $: selected = $filteredImages[$selection.anchor];
-
-  const expandImage = (event: CustomEvent<number>) => {
-    $selection.anchor = event.detail;
+  const expandImage = (index: number | undefined) => {
+    if (index != null) {
+      $selection.anchor = index;
+    }
     expanded = !expanded;
   };
 
-  const selectImage = (
-    event: CustomEvent<{ index: number; shiftKey: boolean; ctrlKey: boolean }>
-  ) => {
+  const selectImage = ({ index, shiftKey, ctrlKey }: onSelectEvent) => {
     let newSelectedIndices = new Set($selection.indices);
     let selectedIndex = $selection.anchor;
-    console.log("selectImage", event.detail);
-    if (event.detail.shiftKey) {
+    if (shiftKey) {
       newSelectedIndices = new Set(
-        Array.from(
-          { length: Math.abs(event.detail.index - selectedIndex) + 1 },
-          (_, i) =>
-            event.detail.index > selectedIndex
-              ? selectedIndex + i
-              : selectedIndex - i
+        Array.from({ length: Math.abs(index - selectedIndex) + 1 }, (_, i) =>
+          index > selectedIndex ? selectedIndex + i : selectedIndex - i
         )
       );
-    } else if (event.detail.ctrlKey) {
-      if (newSelectedIndices.has(event.detail.index)) {
-        newSelectedIndices.delete(event.detail.index);
+    } else if (ctrlKey) {
+      if (newSelectedIndices.has(index)) {
+        newSelectedIndices.delete(index);
       } else {
-        newSelectedIndices.add(event.detail.index);
+        newSelectedIndices.add(index);
       }
     } else {
-      newSelectedIndices = new Set([event.detail.index]);
-      selectedIndex = event.detail.index;
+      newSelectedIndices = new Set([index]);
+      selectedIndex = index;
     }
     selection.set({
       anchor: selectedIndex,
@@ -59,33 +52,33 @@
     });
   };
 
-  const searchNew = async (e) => {
-    images.search(e.detail);
-  };
+  // const searchNew = async (e) => {
+  //   images.search(e.detail);
+  // };
 </script>
 
 <main class="container">
   <div id="button-section">
     <div id="open-buttons">
-      <button on:click={images.openImage}>Open Image</button>
-      <button on:click={images.opendir}>Open Directory</button>
-      <button on:click={images.opendirRecursive}
+      <button onclick={images.openImage}>Open Image</button>
+      <button onclick={images.opendir}>Open Directory</button>
+      <button onclick={images.opendirRecursive}
         >Open Directory (Recursive)</button
       >
-      <button on:click={images.openREFile}>Open RE</button>
+      <button onclick={images.openREFile}>Open RE</button>
     </div>
     {#if $images.length > 0}
-      <button class="clear-button" on:click={images.reset}
+      <button class="clear-button" onclick={images.reset}
         >Close Directory
       </button>
-      <button class="save-button" on:click={images.save}> Save Images </button>
+      <button class="save-button" onclick={images.save}> Save Images </button>
       <input
         type="text"
         bind:value={$filter}
         placeholder="Filter by name or path"
       />
     {/if}
-    <!-- <SearchBar on:search={searchNew} /> -->
+    <!-- <SearchBar onSubmit={searchNew} /> -->
     <SearchModal />
     <TagModal />
   </div>
@@ -99,8 +92,8 @@
           src={$images[0].src}
           path={$images[0].path}
           name={$images[0].name}
-          on:expand={expandImage}
-          on:select={selectImage}
+          onExpand={expandImage}
+          onSelect={selectImage}
         />
       </div>
     </div>
@@ -113,8 +106,8 @@
           src={image.src}
           path={image.path}
           name={image.name}
-          on:expand={expandImage}
-          on:select={selectImage}
+          onExpand={expandImage}
+          onSelect={selectImage}
         />
       {/each}
     </div>
@@ -127,11 +120,11 @@
     alt={selected?.name +
       (selected?.subreddit ? ` (${selected?.subreddit})` : "")}
     path={selected?.path}
-    on:close={expandImage}
-    on:next={() => {
+    onClose={() => expandImage(undefined)}
+    onNext={() => {
       $selection.anchor = ($selection.anchor + 1) % $filteredImages.length;
     }}
-    on:prev={() => {
+    onPrev={() => {
       $selection.anchor =
         ($selection.anchor - 1 + $filteredImages.length) %
         $filteredImages.length;

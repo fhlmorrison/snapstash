@@ -1,16 +1,17 @@
 <script>
   import TagAdder from "./TagAdder.svelte";
 
-  export let tags = [];
+  /** @type {{tags?: any}} */
+  let { tags = $bindable([]) } = $props();
 
-  let showAddTag = false;
+  let showAddTag = $state(false);
 </script>
 
 <div class="tag-text">
   {#each tags as tag}
     <button
       class="tag remove-tag"
-      on:click={() => {
+      onclick={() => {
         tags = tags.filter((t) => t !== tag);
       }}>{tag}</button
     >
@@ -27,7 +28,7 @@
       />
     </div>
   {:else}
-    <button on:click={() => (showAddTag = true)} class="tag add-tag">+</button>
+    <button onclick={() => (showAddTag = true)} class="tag add-tag">+</button>
   {/if}
 </div>
 

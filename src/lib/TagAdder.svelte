@@ -3,10 +3,7 @@
   import { tags } from "./tags";
 
   let availableTags = $tags;
-  $: filteredTags = availableTags.filter((tag) =>
-    tag.toLowerCase().includes(queryString.toLowerCase())
-  );
-  let queryString = "";
+  let queryString = $state("");
 
   const dispatch = createEventDispatcher();
   const addTag = (tag: string) => {
@@ -22,6 +19,9 @@
   const onClose = () => {
     dispatch("close", null);
   };
+  let filteredTags = $derived(availableTags.filter((tag) =>
+    tag.toLowerCase().includes(queryString.toLowerCase())
+  ));
 </script>
 
 <div id="tag-adder">
@@ -34,16 +34,16 @@
     />
     <div id="taglist">
       {#each filteredTags as tag}
-        <button class="tag" on:click={() => addTag(tag)}>{tag}</button>
+        <button class="tag" onclick={() => addTag(tag)}>{tag}</button>
       {/each}
       {#if queryString.length > 0 && !filteredTags.includes(queryString)}
-        <button class="tag" on:click={() => createAndAddTag(queryString)}
+        <button class="tag" onclick={() => createAndAddTag(queryString)}
           >Create "{queryString}" tag</button
         >
       {/if}
     </div>
   </div>
-  <button on:click={onClose}>Close</button>
+  <button onclick={onClose}>Close</button>
 </div>
 
 <style>

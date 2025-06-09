@@ -1,98 +1,98 @@
 <script lang="ts">
   import { readParameters, readTags } from "./images";
   import { onMount } from "svelte";
-  import { createEventDispatcher } from "svelte";
   import TagAdder from "./TagAdder.svelte";
   import { removeTagFromImage, tagImage } from "./tags";
-  export let src = "";
-  export let alt = "";
-  export let path = "";
-  const dispatch = createEventDispatcher();
+  interface Props {
+    src?: string;
+    alt?: string;
+    path?: string;
+    onNext?: () => void;
+    onPrev?: () => void;
+    onClose?: () => void;
+  }
 
-  let parameterText = "";
+  let {
+    src = "",
+    alt = "",
+    path = "",
+    onClose,
+    onNext,
+    onPrev,
+  }: Props = $props();
 
-  $: updateParameterText(path);
-
-  $: isVideo =
-    path.includes(".mp4") ||
-    path.includes(".webm") ||
-    src.includes(".mp4") ||
-    src.includes(".webm");
+  let parameterText = $state("");
 
   const updateParameterText = async (pth: string) => {
     if (pth === "") {
       parameterText = "";
       return;
     }
-    parameterText = await readParameters(pth);
+    parameterText = (await readParameters(pth)) ?? "";
   };
 
-  let showTags = true;
+  let showTags = $state(true);
 
-  let tags = [];
-
-  $: setTags(path);
+  let tags: string[] = $state([]);
 
   const setTags = async (src: string) => {
-    tags = await readTags(src);
+    tags = (await readTags(src)) ?? [];
   };
 
-  let modal;
+  let modal: HTMLDivElement | undefined = $state();
   onMount(() => {
-    modal.focus();
+    modal?.focus();
   });
 
-  let closeModal = (): void => {
-    dispatch("close", null);
-  };
-
-  const next = () => {
-    dispatch("next", null);
-  };
-
-  const prev = () => {
-    dispatch("prev", null);
-  };
-
-  const keyPressed = (event) => {
+  const keyPressed = (event: KeyboardEvent) => {
     switch (event.key) {
       case "Escape":
-        closeModal();
+        onClose?.();
         break;
       case "ArrowRight":
-        next();
+        onNext?.();
         break;
       case "ArrowLeft":
-        prev();
+        onPrev?.();
         break;
     }
   };
 
-  let showAddTag = false;
+  let showAddTag = $state(false);
+  $effect(() => {
+    updateParameterText(path);
+    setTags(path);
+  });
+  let isVideo = $derived(
+    path.includes(".mp4") ||
+      path.includes(".webm") ||
+      src.includes(".mp4") ||
+      src.includes(".webm")
+  );
 </script>
 
-<div on:keydown={keyPressed} tabindex="-1">
+<div onkeydown={keyPressed} tabindex="-1">
   <div
     bind:this={modal}
     class="modal"
     role="button"
-    on:click={closeModal}
+    onclick={onClose}
     tabindex={0}
-    on:keydown={() => {}}
-  />
+    onkeydown={() => {}}
+  ></div>
   {#if isVideo}
-    <video class="expanded-image" {src} on:keydown={keyPressed} controls />
+    <video class="expanded-image" {src} onkeydown={keyPressed} controls></video>
   {:else}
-    <img class="expanded-image" {src} {alt} on:keydown={keyPressed} />
+    <img class="expanded-image" {src} {alt} onkeydown={keyPressed} />
   {/if}
   <!-- <img class="expanded-image" {src} {alt} on:keydown={keyPressed} /> -->
 
-  <button class="prev nav-button" on:click={prev}>&lt</button>
-  <button class="next nav-button" on:click={next}>&gt</button>
+  <button class="prev nav-button" onclick={onPrev}>&lt</button>
+  <button class="next nav-button" onclick={onNext}>&gt</button>
   <div class="text-box">
     <h2 class="title">{alt}</h2>
     <div class="parameter-box">
-      <button class="tag-button" on:click={() => (showTags = !showTags)}>
+      <button class="tag-button" onclick={() => (showTags = !showTags)}>
         {#if showTags}
           Tags
         {:else}
@@ -104,7 +104,7 @@
           {#each tags as tag}
             <button
               class="tag remove-tag"
-              on:click={() => {
+              onclick={() => {
                 removeTagFromImage(path, tag);
                 setTags(path);
               }}>{tag}</button
@@ -123,7 +123,7 @@
               />
             </div>
           {:else}
-            <button on:click={() => (showAddTag = true)} class="tag add-tag"
+            <button onclick={() => (showAddTag = true)} class="tag add-tag"
               >+</button
             >
           {/if}
