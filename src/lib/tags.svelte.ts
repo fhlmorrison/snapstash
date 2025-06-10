@@ -59,22 +59,22 @@ class TagStoreClass implements TagStore {
     this.refresh();
   }
 
-  async refresh() {
+  refresh = async () => {
     this.tags = await getTags();
-  }
+  };
 
-  async create(tag: string) {
+  create = async (tag: string) => {
     await createTag(tag);
     await this.refresh();
-  }
+  };
 
-  async autoTag(tag: string, images: string[], strict = true) {
+  autoTag = async (tag: string, images: string[], strict = true) => {
     return await autoTag(tag, images, strict);
-  }
+  };
 
-  async tagAllImages(tag: string, images: string[]) {
+  tagAllImages = async (tag: string, images: string[]) => {
     return await tagAllImages(tag, images);
-  }
+  };
 }
 
 export const tagStore = new TagStoreClass();

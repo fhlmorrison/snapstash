@@ -4,7 +4,6 @@ import { BaseDirectory, readDir, readTextFile } from "@tauri-apps/plugin-fs";
 import type { DirEntry, FileHandle } from "@tauri-apps/plugin-fs";
 import { invoke } from "@tauri-apps/api/core";
 import { path } from "@tauri-apps/api";
-import { writable, get, derived } from "svelte/store";
 import { join } from "@tauri-apps/api/path";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4", "webm"];
@@ -186,13 +185,13 @@ class ImageStoreClass implements ImageStore {
   );
 
   /// Saves the current images into the database
-  async save() {
+  save = async () => {
     const files = this.images.map(({ path }) => path);
     return await saveImages(files);
-  }
+  };
 
   /// Opens a dialogue to select a single image file to open
-  async openImage() {
+  openImage = async () => {
     const filePath = await openImageDialogue();
     console.log("Selected file:", filePath);
     if (filePath) {
@@ -204,9 +203,9 @@ class ImageStoreClass implements ImageStore {
         },
       ];
     }
-  }
+  };
 
-  async opendir() {
+  opendir = async () => {
     const dir = await openDirectory();
     console.log("Selected directory:", dir);
     if (dir) {
@@ -218,11 +217,13 @@ class ImageStoreClass implements ImageStore {
           src: await openImageFile(path),
         }))
       );
-      this.images = mappedImages;
+      console.log("Mapped images:", mappedImages);
+      console.log(this);
+      this.images = [...mappedImages];
     }
-  }
+  };
 
-  async opendirRecursive() {
+  opendirRecursive = async () => {
     const dir = await openDirectory();
     if (dir) {
       const files = await readDirImagesRecursive(dir);
@@ -233,15 +234,16 @@ class ImageStoreClass implements ImageStore {
           src: await openImageFile(path),
         }))
       );
-      this.images = mappedImages;
+      this.images = [...mappedImages];
     }
-  }
+  };
 
-  reset() {
+  reset = () => {
+    console.log("Resetting image store");
     this.images = [];
-  }
+  };
 
-  async search(queryText: string) {
+  search = async (queryText: string) => {
     const imageFiles: ImageInfo[] = await Promise.all(
       (
         await searchImages(queryText)
@@ -254,9 +256,9 @@ class ImageStoreClass implements ImageStore {
       })
     );
     this.images = imageFiles;
-  }
+  };
 
-  async searchByTags(tags: string[]) {
+  searchByTags = async (tags: string[]) => {
     const imageFiles: ImageInfo[] = await Promise.all(
       (
         await searchImagesWithTags(tags)
@@ -269,9 +271,12 @@ class ImageStoreClass implements ImageStore {
       })
     );
     this.images = imageFiles;
-  }
+  };
 
-  async searchByTagsAdvanced(positiveTags: string[], negativeTags: string[]) {
+  searchByTagsAdvanced = async (
+    positiveTags: string[],
+    negativeTags: string[]
+  ) => {
     const imageFiles: ImageInfo[] = await Promise.all(
       (
         await searchImagesWithTagsAdvanced(positiveTags, negativeTags)
@@ -284,9 +289,9 @@ class ImageStoreClass implements ImageStore {
       })
     );
     this.images = imageFiles;
-  }
+  };
 
-  async openREFile() {
+  openREFile = async () => {
     const file = await open({
       multiple: false,
       filters: [
@@ -316,7 +321,7 @@ class ImageStoreClass implements ImageStore {
         });
       this.images = entries;
     }
-  }
+  };
 }
 
 export const imageStore = new ImageStoreClass();

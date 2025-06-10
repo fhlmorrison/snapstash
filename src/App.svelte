@@ -10,6 +10,7 @@
 
   // let selectedIndex = 0;
   // let selectedIndices: Set<number> = new Set();
+  $inspect(imageStore.images);
 
   let selected: ImageInfo | null = $derived(
     imageStore.filteredImages[imageStore.selection.anchor]
