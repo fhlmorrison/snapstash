@@ -66,9 +66,9 @@
                 imageStore.selectedImages.map((i) => i.path)
               )}>Tag Selected</button
           >
-          <button onclick={() => imageStore.searchByTags([tag])}
+          <!-- <button onclick={() => imageStore.searchByTags([tag])}
             >Open Tagged</button
-          >
+          > -->
         </div>
       {/each}
     </div>
