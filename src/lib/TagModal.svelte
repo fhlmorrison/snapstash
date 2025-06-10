@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { tags } from "./tags";
+  import { tagStore } from "./tags.svelte";
   import { imageStore } from "./images.svelte";
 
   const addTag = () => {
-    tags.create(pendingTag);
-    tags.refresh();
+    tagStore.create(pendingTag);
+    tagStore.refresh();
   };
 
   let open = $state(false);
@@ -16,13 +15,15 @@
     open = !open;
   };
 
-  onMount(() => {
-    tags.refresh();
+  $effect.pre(() => {
+    tagStore.refresh();
   });
 
   let pendingTag = $state("");
   let filteredTags = $derived(
-    $tags.filter((tag) => tag.toLowerCase().includes(pendingTag.toLowerCase()))
+    tagStore.tags.filter((tag) =>
+      tag.toLowerCase().includes(pendingTag.toLowerCase())
+    )
   );
 </script>
 
@@ -34,7 +35,7 @@
 {#if open}
   <div class="tag-menu">
     <!-- markup (zero or more items) goes here -->
-    <button onclick={tags.refresh}>Refresh Tags</button>
+    <button onclick={tagStore.refresh}>Refresh Tags</button>
     <!-- <label for="auto-tag"
       >Strict
       <input type="checkbox" id="auto-tag" bind:checked={strict} />
@@ -53,14 +54,14 @@
           > -->
           <button
             onclick={() =>
-              tags.tagAllImages(
+              tagStore.tagAllImages(
                 tag,
                 imageStore.filteredImages.map((i) => i.path)
               )}>Tag All</button
           >
           <button
             onclick={() =>
-              tags.tagAllImages(
+              tagStore.tagAllImages(
                 tag,
                 imageStore.selectedImages.map((i) => i.path)
               )}>Tag Selected</button

@@ -2,7 +2,7 @@
   import { readParameters, readTags } from "./images.svelte";
   import { onMount } from "svelte";
   import TagAdder from "./TagAdder.svelte";
-  import { removeTagFromImage, tagImage } from "./tags";
+  import { removeTagFromImage, tagImage } from "./tags.svelte";
   interface Props {
     src?: string;
     alt?: string;

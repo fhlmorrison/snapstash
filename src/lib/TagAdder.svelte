@@ -1,8 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { tags } from "./tags";
+  import { tagStore } from "./tags.svelte";
 
-  let availableTags = $tags;
   let queryString = $state("");
 
   const dispatch = createEventDispatcher();
@@ -11,17 +10,19 @@
     dispatch("close", null);
   };
 
-  const createAndAddTag = async (tagString) => {
-    await tags.create(tagString);
+  const createAndAddTag = async (tagString: string) => {
+    await tagStore.create(tagString);
     dispatch("addTag", tagString);
     dispatch("close", null);
   };
   const onClose = () => {
     dispatch("close", null);
   };
-  let filteredTags = $derived(availableTags.filter((tag) =>
-    tag.toLowerCase().includes(queryString.toLowerCase())
-  ));
+  let filteredTags = $derived(
+    tagStore.tags.filter((tag) =>
+      tag.toLowerCase().includes(queryString.toLowerCase())
+    )
+  );
 </script>
 
 <div id="tag-adder">
