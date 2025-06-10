@@ -1,8 +1,7 @@
 <script lang="ts">
   import FaExpand from "svelte-icons/fa/FaExpand.svelte";
   import FaPlay from "svelte-icons/fa/FaPlay.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  import { configStore } from "./config.svelte";
 
   export interface onSelectEvent {
     index: number;
@@ -61,7 +60,7 @@
 </script>
 
 <div
-  class={`image-square ${selected ? "selected" : ""}`}
+  class={`image-square ${selected ? "selected" : ""} ${configStore.useMasonry ? "masonry" : "grid"}`}
   role="button"
   onclick={onClick}
   onkeydown={keyPressed}
@@ -86,8 +85,6 @@
 <style>
   .image-square {
     width: 100%;
-    /* height: 100%; */
-    height: fit-content;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -99,6 +96,14 @@
       rgba(0, 0, 0, 0.9),
       rgba(255, 255, 255, 0.5)
     ); */
+  }
+
+  .image-square.grid {
+    height: 100%;
+  }
+
+  .image-square.masonry {
+    height: fit-content;
   }
 
   .image-square.selected {
@@ -122,18 +127,24 @@
 
   .image-square img {
     width: 100%;
-    /* height: 100%; */
-    /* aspect-ratio: 1 / 1; */
     object-fit: cover;
     /* object-fit: contain; */
   }
 
+  .image-square.grid img {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
   .image-square video {
     width: 100%;
-    /* height: 100%; */
-    /* aspect-ratio: 1 / 1; */
     object-fit: cover;
     /* object-fit: contain; */
+  }
+
+  .image-square.grid video {
+    height: 100%;
+    aspect-ratio: 1 / 1;
   }
 
   .expand {

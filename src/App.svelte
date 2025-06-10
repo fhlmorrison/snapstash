@@ -11,6 +11,8 @@
   import TagModal from "./lib/TagModal.svelte";
   import SearchModal from "./lib/SearchModal.svelte";
   import Masonry from "./lib/Masonry.svelte";
+  import { configStore } from "./lib/config.svelte";
+  import SettingsModal from "./lib/SettingsModal.svelte";
 
   // let selectedIndex = 0;
   // let selectedIndices: Set<number> = new Set();
@@ -67,7 +69,10 @@
       <button onclick={images.opendirRecursive}
         >Open Directory (Recursive)</button
       >
-      <button onclick={images.openREFile}>Open RE</button>
+      {#if configStore.useREButton}
+        <button onclick={images.openREFile}>Open RE</button>
+      {/if}
+      <button onclick={configStore.openSettings}>Settings</button>
     </div>
     {#if $images.length > 0}
       <button class="clear-button" onclick={images.reset}
@@ -99,8 +104,30 @@
         />
       </div>
     </div>
+  {:else if configStore.useMasonry}
+    <Masonry
+      items={$filteredImages}
+      idKey="path"
+      maxColWidth={200}
+      minColWidth={220}
+      gap={10}
+    >
+      {#snippet children({ idx, item }: { item: ImageInfo; idx: number })}
+        <div class="image-frame">
+          <ImageSquare
+            index={idx}
+            selected={$selection.indices.has(idx)}
+            src={item.src ?? ""}
+            path={item.path}
+            name={item.name}
+            onExpand={expandImage}
+            onSelect={selectImage}
+          />
+        </div>
+      {/snippet}
+    </Masonry>
   {:else}
-    <!-- <div class="image-grid">
+    <div class="image-grid">
       {#each $filteredImages as image, index}
         <ImageSquare
           {index}
@@ -112,22 +139,7 @@
           onSelect={selectImage}
         />
       {/each}
-    </div> -->
-    <Masonry items={filteredIndices} idKey="path">
-      {#snippet children({ item }: { item: number })}
-        <div class="image-frame">
-          <ImageSquare
-            index={item}
-            selected={$selection.indices.has(item)}
-            src={$filteredImages[item].src ?? ""}
-            path={$filteredImages[item].path}
-            name={$filteredImages[item].name}
-            onExpand={expandImage}
-            onSelect={selectImage}
-          />
-        </div>
-      {/snippet}
-    </Masonry>
+    </div>
   {/if}
 </main>
 
@@ -148,6 +160,7 @@
     }}
   />
 {/if}
+<SettingsModal />
 
 <style>
   .clear-button {
@@ -155,10 +168,16 @@
   }
 
   #open-buttons {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    /* display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); */
+    display: flex;
+    flex-direction: row;
     gap: 1px;
     width: 100%;
+  }
+
+  #open-buttons > * {
+    flex: 1;
   }
 
   #button-section {
