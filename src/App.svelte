@@ -108,22 +108,20 @@
     <Masonry
       items={$filteredImages}
       idKey="path"
-      maxColWidth={200}
-      minColWidth={220}
+      minColWidth={200}
+      maxColWidth={245}
       gap={10}
     >
       {#snippet children({ idx, item }: { item: ImageInfo; idx: number })}
-        <div class="image-frame">
-          <ImageSquare
-            index={idx}
-            selected={$selection.indices.has(idx)}
-            src={item.src ?? ""}
-            path={item.path}
-            name={item.name}
-            onExpand={expandImage}
-            onSelect={selectImage}
-          />
-        </div>
+        <ImageSquare
+          index={idx}
+          selected={$selection.indices.has(idx)}
+          src={item.src ?? ""}
+          path={item.path}
+          name={item.name}
+          onExpand={expandImage}
+          onSelect={selectImage}
+        />
       {/snippet}
     </Masonry>
   {:else}
@@ -189,7 +187,7 @@
   .image-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1em;
+    gap: 10px;
   }
 
   #single-image {

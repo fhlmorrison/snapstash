@@ -91,6 +91,7 @@
     border: 2px solid black;
     cursor: pointer;
     position: relative;
+    box-sizing: border-box;
     /* background: radial-gradient(
       circle at center,
       rgba(0, 0, 0, 0.9),
