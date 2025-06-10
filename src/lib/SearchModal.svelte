@@ -1,5 +1,5 @@
-<script>
-  import { images } from "./images";
+<script lang="ts">
+  import { imageStore } from "./images.svelte";
   import TagBar from "./TagBar.svelte";
 
   let open = $state(false);
@@ -8,8 +8,8 @@
     open = !open;
   };
 
-  let negativeTags = $state([]);
-  let positiveTags = $state([]);
+  let negativeTags = $state<string[]>([]);
+  let positiveTags = $state<string[]>([]);
 </script>
 
 <button onclick={toggleOpen}>
@@ -29,7 +29,8 @@
     </div>
     <!-- <button on:click={() => images.searchByTags(positiveTags)}> Search </button> -->
     <button
-      onclick={() => images.searchByTagsAdvanced(positiveTags, negativeTags)}
+      onclick={() =>
+        imageStore.searchByTagsAdvanced(positiveTags, negativeTags)}
     >
       Search
     </button>

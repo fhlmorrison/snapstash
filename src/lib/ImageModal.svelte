@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { readParameters, readTags } from "./images";
+  import { readParameters, readTags } from "./images.svelte";
   import { onMount } from "svelte";
   import TagAdder from "./TagAdder.svelte";
   import { removeTagFromImage, tagImage } from "./tags";

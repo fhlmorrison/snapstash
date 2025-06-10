@@ -1,13 +1,12 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import { tags } from "./tags";
-  import { filteredImages, images, selectedImages } from "./images";
+  import { imageStore } from "./images.svelte";
 
   const addTag = () => {
     tags.create(pendingTag);
     tags.refresh();
   };
-
 
   let open = $state(false);
 
@@ -22,9 +21,9 @@
   });
 
   let pendingTag = $state("");
-  let filteredTags = $derived($tags.filter((tag) =>
-    tag.toLowerCase().includes(pendingTag.toLowerCase())
-  ));
+  let filteredTags = $derived(
+    $tags.filter((tag) => tag.toLowerCase().includes(pendingTag.toLowerCase()))
+  );
 </script>
 
 <button onclick={toggleOpen}>
@@ -56,17 +55,17 @@
             onclick={() =>
               tags.tagAllImages(
                 tag,
-                $filteredImages.map((i) => i.path)
+                imageStore.filteredImages.map((i) => i.path)
               )}>Tag All</button
           >
           <button
             onclick={() =>
               tags.tagAllImages(
                 tag,
-                $selectedImages.map((i) => i.path)
+                imageStore.selectedImages.map((i) => i.path)
               )}>Tag Selected</button
           >
-          <button onclick={() => images.searchByTags([tag])}
+          <button onclick={() => imageStore.searchByTags([tag])}
             >Open Tagged</button
           >
         </div>

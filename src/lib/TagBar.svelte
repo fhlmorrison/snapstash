@@ -1,8 +1,8 @@
-<script>
+<script lang="ts">
   import TagAdder from "./TagAdder.svelte";
 
   /** @type {{tags?: any}} */
-  let { tags = $bindable([]) } = $props();
+  let { tags = $bindable<string[]>([]) } = $props();
 
   let showAddTag = $state(false);
 </script>
