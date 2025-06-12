@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import TagAdder from "./TagAdder.svelte";
   import { removeTagFromImage, tagImage } from "./tags.svelte";
+  import { configStore } from "./config.svelte";
   interface Props {
     src?: string;
     alt?: string;
@@ -81,7 +82,13 @@
     onkeydown={() => {}}
   ></div>
   {#if isVideo}
-    <video class="expanded-image" {src} onkeydown={keyPressed} controls></video>
+    <video
+      class="expanded-image"
+      {src}
+      loop={configStore.loopVideos}
+      onkeydown={keyPressed}
+      controls
+    ></video>
   {:else}
     <img class="expanded-image" {src} {alt} onkeydown={keyPressed} />
   {/if}

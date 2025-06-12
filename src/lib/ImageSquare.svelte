@@ -71,7 +71,7 @@
   </div>
 
   {#if isVideo}
-    <video {src} bind:this={video} muted></video>
+    <video {src} loop={configStore.loopVideos} bind:this={video} muted></video>
     <div class="overlay" onclick={play}>
       <FaPlay />
     </div>

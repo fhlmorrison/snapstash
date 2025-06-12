@@ -12,6 +12,13 @@
   // let selectedIndices: Set<number> = new Set();
   $inspect(imageStore.images);
 
+  let imageMinWidth = $derived(
+    configStore.useLargeImages ? configStore.minImageWidth : 200
+  );
+  let imageMaxWidth = $derived(
+    configStore.useLargeImages ? configStore.maxImageWidth : 245
+  );
+
   let selected: ImageInfo | null = $derived(
     imageStore.filteredImages[imageStore.selection.anchor]
   );
@@ -109,8 +116,8 @@
     <Masonry
       items={imageStore.filteredImages}
       idKey="path"
-      minColWidth={200}
-      maxColWidth={245}
+      minColWidth={imageMinWidth}
+      maxColWidth={imageMaxWidth}
       gap={10}
     >
       {#snippet children({ idx, item }: { item: ImageInfo; idx: number })}
@@ -126,7 +133,10 @@
       {/snippet}
     </Masonry>
   {:else}
-    <div class="image-grid">
+    <div
+      class="image-grid"
+      style="--image-min-width: {imageMinWidth}px; --image-max-width: {imageMaxWidth}px;"
+    >
       {#each imageStore.filteredImages as image, index}
         <ImageSquare
           {index}
@@ -188,7 +198,10 @@
 
   .image-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(var(--image-min-width), 1fr)
+    );
     gap: 10px;
   }
 

@@ -1,6 +1,10 @@
 import { path } from "@tauri-apps/api";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
+export const MIN_MIN_IMAGE_WIDTH = 200; // Minimum image width in pixels
+export const MAX_MIN_IMAGE_WIDTH = 800; // Maximum image width in pixels, derived from MIN_IMAGE_WIDTH
+export const MIN_IMAGE_WIDTH_STEP = 50; // Step size for changing the minimum image width
+
 interface ConfigStore {
   // This file is used to store configuration settings for the application.
 
@@ -15,6 +19,14 @@ interface ConfigStore {
   useMasonry: boolean;
   // Shows the button for opening RE files
   useREButton: boolean;
+  // Show tiles as large images
+  useLargeImages: boolean;
+  // Minimum image width in pixels
+  minImageWidth: number;
+  // Maximum image width in pixels, derived from minImageWidth
+  maxImageWidth: number;
+  // If we should loop video by default
+  loopVideos: boolean;
 }
 
 class ConfigStoreClass implements ConfigStore {
@@ -23,6 +35,10 @@ class ConfigStoreClass implements ConfigStore {
   isModalOpen = $state(false);
   useMasonry = $state(true);
   useREButton = $state(false);
+  useLargeImages = $state(false);
+  minImageWidth = $state(200);
+  maxImageWidth = $derived((this.minImageWidth * 245) / 200);
+  loopVideos = $state(false);
 
   constructor() {
     // Load from tauri config file if available
@@ -51,6 +67,10 @@ class ConfigStoreClass implements ConfigStore {
         {
           useMasonry: this.useMasonry,
           useREButton: this.useREButton,
+          useLargeImages: this.useLargeImages,
+          minImageWidth: this.minImageWidth,
+          maxImageWidth: this.maxImageWidth,
+          loopVideos: this.loopVideos,
         },
         null,
         2
