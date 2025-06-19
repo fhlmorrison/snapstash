@@ -8,6 +8,7 @@
     src?: string;
     alt?: string;
     path?: string;
+    link?: string;
     onNext?: () => void;
     onPrev?: () => void;
     onClose?: () => void;
@@ -17,6 +18,7 @@
     src = "",
     alt = "",
     path = "",
+    link,
     onClose,
     onNext,
     onPrev,
@@ -97,7 +99,14 @@
   <button class="prev nav-button" onclick={onPrev}>&lt</button>
   <button class="next nav-button" onclick={onNext}>&gt</button>
   <div class="text-box">
-    <h2 class="title">{alt}</h2>
+    <h2 class="title">
+      {alt}
+      {#if link}
+        <a href={link} target="_blank" rel="noopener noreferrer">
+          <span class="link-icon">🔗</span>
+        </a>
+      {/if}
+    </h2>
     <div class="parameter-box">
       <button class="tag-button" onclick={() => (showTags = !showTags)}>
         {#if showTags}

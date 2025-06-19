@@ -115,7 +115,7 @@
   {:else if configStore.useMasonry}
     <Masonry
       items={imageStore.filteredImages}
-      idKey="path"
+      idKey="src"
       minColWidth={imageMinWidth}
       maxColWidth={imageMaxWidth}
       gap={10}
@@ -158,6 +158,7 @@
     alt={selected?.name +
       (selected?.subreddit ? ` (${selected?.subreddit})` : "")}
     path={selected?.path}
+    link={selected?.threadUrl}
     onClose={() => expandImage(undefined)}
     onNext={() => {
       imageStore.selection.anchor =
