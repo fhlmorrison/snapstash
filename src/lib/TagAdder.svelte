@@ -31,6 +31,7 @@
       id="queryinput"
       type="text"
       placeholder="Add a tag"
+      autocomplete="off"
       bind:value={queryString}
     />
     <div id="taglist">

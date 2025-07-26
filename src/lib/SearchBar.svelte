@@ -19,6 +19,6 @@
     if (e.key == "Enter") submit();
   }}
 >
-  <input type="text" bind:value />
+  <input type="text" bind:value autocomplete="off" />
   <button onclick={submit}>Search</button>
 </div>

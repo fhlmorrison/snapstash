@@ -72,7 +72,7 @@
         </div>
       {/each}
     </div>
-    <input type="text" bind:value={pendingTag} />
+    <input type="text" autocomplete="off" bind:value={pendingTag} />
     <button onclick={addTag}>Add Tag</button>
   </div>
 {/if}

@@ -1,7 +1,7 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { BaseDirectory, readDir, readTextFile } from "@tauri-apps/plugin-fs";
-import type { DirEntry, FileHandle } from "@tauri-apps/plugin-fs";
+import { readDir, readTextFile } from "@tauri-apps/plugin-fs";
+import type { DirEntry } from "@tauri-apps/plugin-fs";
 import { invoke } from "@tauri-apps/api/core";
 import { path } from "@tauri-apps/api";
 import { join } from "@tauri-apps/api/path";

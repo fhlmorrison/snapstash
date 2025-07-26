@@ -91,6 +91,7 @@
         type="text"
         bind:value={imageStore.filter}
         placeholder="Filter by name or path"
+        autocomplete="off"
       />
     {/if}
     <!-- <SearchBar onSubmit={searchNew} /> -->
