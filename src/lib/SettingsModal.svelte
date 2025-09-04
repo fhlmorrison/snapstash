@@ -5,9 +5,11 @@
     MIN_IMAGE_WIDTH_STEP,
     MIN_MIN_IMAGE_WIDTH,
   } from "./config.svelte";
+
+  let isOpen = $derived(configStore.isModalOpen);
 </script>
 
-{#if configStore.isModalOpen}
+{#if isOpen}
   <div class="modal">
     <div class="modal-content">
       <span class="close" on:click={() => (configStore.isModalOpen = false)}
