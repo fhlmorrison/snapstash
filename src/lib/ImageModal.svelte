@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { readParameters, readTags } from "./images.svelte";
+  import { imageStore, readParameters, readTags } from "./images.svelte";
   import { onMount } from "svelte";
   import TagAdder from "./TagAdder.svelte";
   import { removeTagFromImage, tagImage } from "./tags.svelte";
   import { configStore } from "./config.svelte";
+  import TagPill from "./TagPill.svelte";
   interface Props {
     src?: string;
     alt?: string;
@@ -118,29 +119,43 @@
       {#if showTags}
         <div class="tag-text">
           {#each tags as tag}
-            <button
+            <!-- <button
               class="tag remove-tag"
               onclick={() => {
                 removeTagFromImage(path, tag);
                 setTags(path);
               }}>{tag}</button
-            >
+            > -->
+            <TagPill
+              {tag}
+              onRemoveClick={async () => {
+                await removeTagFromImage(path, tag);
+                await setTags(path);
+              }}
+              onMainClick={() => {
+                imageStore.searchByTags([tag]);
+                onClose?.();
+              }}
+            />
           {/each}
           {#if showAddTag}
             <div class="tag">
               <TagAdder
-                on:close={() => {
+                onClose={() => {
                   showAddTag = false;
                 }}
-                on:addTag={({ detail: tag }) => {
-                  tagImage(path, tag);
-                  setTags(path);
+                onAddTag={async (tag) => {
+                  await tagImage(path, tag);
+                  await setTags(path);
                 }}
               />
             </div>
           {:else}
-            <button onclick={() => (showAddTag = true)} class="tag add-tag"
-              >+</button
+            <button
+              onclick={() => {
+                showAddTag = true;
+              }}
+              class="tag add-tag">+</button
             >
           {/if}
         </div>

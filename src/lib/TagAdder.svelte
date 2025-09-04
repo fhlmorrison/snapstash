@@ -1,22 +1,30 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { tagStore } from "./tags.svelte";
 
   let queryString = $state("");
 
-  const dispatch = createEventDispatcher();
+  interface Props {
+    onClose: () => void;
+    onAddTag: (tag: string) => void;
+  }
+
+  let { onClose, onAddTag }: Props = $props();
+
+  $effect(() => {
+    inputref?.focus();
+  });
+
+  let inputref: HTMLInputElement;
+
   const addTag = (tag: string) => {
-    dispatch("addTag", tag);
-    dispatch("close", null);
+    onAddTag(tag);
+    onClose();
   };
 
   const createAndAddTag = async (tagString: string) => {
     await tagStore.create(tagString);
-    dispatch("addTag", tagString);
-    dispatch("close", null);
-  };
-  const onClose = () => {
-    dispatch("close", null);
+    onAddTag(tagString);
+    onClose();
   };
   let filteredTags = $derived(
     tagStore.tags.filter((tag) =>
@@ -28,6 +36,7 @@
 <div id="tag-adder">
   <div id="inputbox">
     <input
+      bind:this={inputref}
       id="queryinput"
       type="text"
       placeholder="Add a tag"

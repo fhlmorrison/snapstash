@@ -19,16 +19,21 @@
   {#if showAddTag}
     <div class="tag">
       <TagAdder
-        on:close={() => {
+        onClose={() => {
           showAddTag = false;
         }}
-        on:addTag={({ detail: tag }) => {
+        onAddTag={(tag) => {
           tags = [...tags, tag];
         }}
       />
     </div>
   {:else}
-    <button onclick={() => (showAddTag = true)} class="tag add-tag">+</button>
+    <button
+      onclick={() => {
+        showAddTag = true;
+      }}
+      class="tag add-tag">+</button
+    >
   {/if}
 </div>
 
