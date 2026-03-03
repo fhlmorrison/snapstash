@@ -175,6 +175,12 @@ fn create_tag(app: tauri::AppHandle, tag: &str) -> Result<(), String> {
 }
 
 fn main() {
+    #[cfg(target_os = "linux")]
+    unsafe {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())

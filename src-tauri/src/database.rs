@@ -23,6 +23,8 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
         .app_data_dir()
         .expect("failed to get config dir");
 
+    // Print path
+    
     if !dir.is_dir() {
         std::fs::create_dir_all(dir.clone()).map_err(|e| {
             rusqlite::Error::SqliteFailure(
@@ -31,7 +33,8 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
             )
         })?;
     }
-
+    
+    println!("Opening {}", dir.to_string_lossy());
     let conn = Connection::open(dir.join("db.sqlite"))?;
 
     conn.execute(
