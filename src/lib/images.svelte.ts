@@ -1,8 +1,7 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, readTextFile } from "@tauri-apps/plugin-fs";
 import type { DirEntry } from "@tauri-apps/plugin-fs";
-import { path } from "@tauri-apps/api";
-import { join } from "@tauri-apps/api/path";
+import { basename, join } from "@tauri-apps/api/path";
 import { apiInvoke, convertFileSrc, isTauri, apiReadDir } from "./api";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4", "webm"];
@@ -81,7 +80,7 @@ async function saveImages(images: string[]) {
 }
 
 function searchImages(queryText: string) {
-  return apiInvoke<string[]>("search_images", { query_text: queryText });
+  return apiInvoke<string[]>("search_images", { queryText });
 }
 
 function searchImagesWithTags(tags: string[]) {
@@ -92,9 +91,9 @@ function searchImagesWithTagsAdvanced(
   positiveTags: string[],
   negativeTags: string[]
 ) {
-  return apiInvoke<string[]>("search_with_tags_advanced", {
-    positive_tags: positiveTags,
-    negative_tags: negativeTags,
+return apiInvoke<string[]>("search_with_tags_advanced", {
+    positiveTags,
+    negativeTags,
   });
 }
 
@@ -103,7 +102,12 @@ async function processEntriesRecursively(
   entries: any[]
 ): Promise<ImageInfo[]> {
   const fileEntryPromises = entries.map(async (entry) => {
-    const entryPath = entry.path;
+    // In Tauri v2, DirEntry doesn't have a 'path' property, only 'name'.
+    // Actix mode entries DO have a 'path' property.
+    let entryPath = entry.path;
+    if (!entryPath && entry.name) {
+        entryPath = isTauri ? await join(parent, entry.name) : `${parent}/${entry.name}`;
+    }
 
     if (entry.isDirectory || entry.is_directory) {
       const subDirEntries: any[] = isTauri ? await readDir(entryPath) : await apiReadDir(entryPath);
@@ -129,7 +133,10 @@ async function processEntries(parent: string, entries: any[]) {
     entries
       .filter((e) => e.isFile || e.is_file)
       .map(async (entry) => {
-        const entryPath = entry.path;
+        let entryPath = entry.path;
+        if (!entryPath && entry.name) {
+            entryPath = isTauri ? await join(parent, entry.name) : `${parent}/${entry.name}`;
+        }
         return {
           name: entry.name,
           path: entryPath,
@@ -200,7 +207,7 @@ class ImageStoreClass implements ImageStore {
     if (filePath) {
         let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
         if (isTauri) {
-            name = await path.basename(filePath);
+            name = await basename(filePath);
         }
       this.images = [
         {
@@ -256,7 +263,7 @@ class ImageStoreClass implements ImageStore {
       ).map(async (filePath) => {
         let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
         if (isTauri) {
-            name = await path.basename(filePath);
+            name = await basename(filePath);
         }
         return {
           name,
@@ -275,7 +282,7 @@ class ImageStoreClass implements ImageStore {
       ).map(async (filePath) => {
         let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
         if (isTauri) {
-            name = await path.basename(filePath);
+            name = await basename(filePath);
         }
         return {
           name,
@@ -297,7 +304,7 @@ class ImageStoreClass implements ImageStore {
       ).map(async (filePath) => {
         let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
         if (isTauri) {
-            name = await path.basename(filePath);
+            name = await basename(filePath);
         }
         return {
           name,

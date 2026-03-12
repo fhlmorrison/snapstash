@@ -32,7 +32,7 @@
       parameterText = "";
       return;
     }
-    parameterText = (await readParameters(pth)) ?? "";
+    // parameterText = (await readParameters(pth)) ?? "";
   };
 
   let showTags = $state(true);

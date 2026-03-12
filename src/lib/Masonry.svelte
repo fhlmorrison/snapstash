@@ -97,7 +97,7 @@
       style="gap: {gap}px; max-width: {maxColWidth}px; {columnStyle}"
     >
       {#if animate}
-        {#each col as [item, idx] (getId(item))}
+        {#each col as [item, idx] (idx)}
           <div
             in:fade={{ delay: 100, duration }}
             out:fade={{ delay: 0, duration }}
@@ -109,7 +109,7 @@
           </div>
         {/each}
       {:else}
-        {#each col as [item, idx] (getId(item))}
+        {#each col as [item, idx] (idx)}
           {#if children}{@render children({ idx, item })}{:else}
             <span>{item}</span>
           {/if}

@@ -58,7 +58,6 @@
     margin-bottom: 0.5em;
     text-align: center;
     background-color: rgba(0, 0, 0, 0);
-    color: #fff;
   }
 
   .remove-tag:hover {

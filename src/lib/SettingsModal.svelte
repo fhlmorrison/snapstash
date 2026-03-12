@@ -12,7 +12,7 @@
 {#if isOpen}
   <div class="modal">
     <div class="modal-content">
-      <span class="close" on:click={() => (configStore.isModalOpen = false)}
+      <span class="close" onclick={() => (configStore.isModalOpen = false)}
         >&times;</span
       >
       <h2>Settings</h2>
@@ -61,13 +61,26 @@
           >{configStore.minImageWidth}px Min image width</label
         >
       </div>
+      <div>
+        <input
+          min="0"
+          max="1"
+          step="0.01"
+          type="range"
+          bind:value={configStore.clipThreshold}
+          name="clipThreshold"
+        />
+        <label for="clipThreshold"
+          >CLIP Threshold: {configStore.clipThreshold.toFixed(2)}</label
+        >
+      </div>
 
       <!-- Save and load buttons at the bottom -->
       <div>
-        <button on:click={() => configStore.saveSettings()}
+        <button onclick={() => configStore.saveSettings()}
           >Save Settings</button
         >
-        <button on:click={() => configStore.loadSettings()}
+        <button onclick={() => configStore.loadSettings()}
           >Load Settings</button
         >
       </div>

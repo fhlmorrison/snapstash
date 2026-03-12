@@ -27,6 +27,8 @@ interface ConfigStore {
   maxImageWidth: number;
   // If we should loop video by default
   loopVideos: boolean;
+  // CLIP auto-tagging threshold
+  clipThreshold: number;
 }
 
 class ConfigStoreClass implements ConfigStore {
@@ -39,6 +41,7 @@ class ConfigStoreClass implements ConfigStore {
   minImageWidth = $state(200);
   maxImageWidth = $derived((this.minImageWidth * 245) / 200);
   loopVideos = $state(false);
+  clipThreshold = $state(0.25);
 
   constructor() {
     // Load from tauri config file if available
@@ -71,6 +74,7 @@ class ConfigStoreClass implements ConfigStore {
           minImageWidth: this.minImageWidth,
           maxImageWidth: this.maxImageWidth,
           loopVideos: this.loopVideos,
+          clipThreshold: this.clipThreshold,
         },
         null,
         2

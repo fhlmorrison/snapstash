@@ -2,8 +2,11 @@ use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
+use crate::clip;
+
 pub struct AppState {
-    pub db: std::sync::Mutex<Option<Connection>>,
+    pub db: std::sync::Mutex<Option<rusqlite::Connection>>,
+    pub clip: clip::ClipStore,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -15,6 +18,22 @@ pub struct DbImage {
     pub id: i32,
     pub path: String,
     pub params: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TagGroup {
+    pub id: i32,
+    pub name: String,
+    pub is_auto_taggable: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Tag {
+    pub id: i32,
+    pub name: String,
+    pub group_id: Option<i32>,
 }
 
 pub fn init_db(handle: &AppHandle) -> Result<Connection> {
@@ -48,9 +67,38 @@ pub fn init_db(handle: &AppHandle) -> Result<Connection> {
     )?;
 
     conn.execute(
+        "CREATE TABLE IF NOT EXISTS tag_groups (
+            id INTEGER NOT NULL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            is_auto_taggable BOOLEAN NOT NULL DEFAULT 1
+        )",
+        [],
+    )?;
+
+    // Check if group_id column exists in tags table (if table exists)
+    {
+        let table_exists: bool = conn.query_row(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='tags'",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(0) > 0;
+
+        if table_exists {
+            let mut stmt = conn.prepare("PRAGMA table_info(tags)")?;
+            let columns: Vec<String> = stmt.query_map([], |row| row.get(1))?.flatten().collect();
+            
+            if !columns.contains(&"group_id".to_string()) {
+                conn.execute("ALTER TABLE tags ADD COLUMN group_id INTEGER REFERENCES tag_groups(id)", [])?;
+            }
+        }
+    }
+
+    conn.execute(
         "CREATE TABLE IF NOT EXISTS tags (
             id INTEGER NOT NULL PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE
+            name TEXT NOT NULL UNIQUE,
+            group_id INTEGER,
+            FOREIGN KEY (group_id) REFERENCES tag_groups(id)
         )",
         [],
     )?;
@@ -132,6 +180,64 @@ pub fn create_tag(conn: &Connection, name: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn create_tag_with_group(conn: &Connection, name: &str, group_id: i32) -> Result<()> {
+    conn.execute(
+        "INSERT INTO tags (name, group_id) values (?1, ?2) ON CONFLICT(name) DO UPDATE SET group_id=?2",
+        rusqlite::params![name, group_id],
+    )?;
+    Ok(())
+}
+
+pub fn create_tag_group(conn: &Connection, name: &str, is_auto_taggable: bool) -> Result<()> {
+    conn.execute(
+        "INSERT INTO tag_groups (name, is_auto_taggable) values (?1, ?2) ON CONFLICT(name) DO UPDATE SET is_auto_taggable=?2",
+        rusqlite::params![name, is_auto_taggable],
+    )?;
+    Ok(())
+}
+
+pub fn update_tag_group_auto_taggable(conn: &Connection, group_id: i32, is_auto_taggable: bool) -> Result<()> {
+    conn.execute(
+        "UPDATE tag_groups SET is_auto_taggable = ?1 WHERE id = ?2",
+        rusqlite::params![is_auto_taggable, group_id],
+    )?;
+    Ok(())
+}
+
+pub fn get_tag_groups(conn: &Connection) -> Result<Vec<TagGroup>> {
+    let mut stmt = conn.prepare("SELECT id, name, is_auto_taggable FROM tag_groups ORDER BY name ASC")?;
+    let rows = stmt.query_map([], |row| {
+        Ok(TagGroup {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            is_auto_taggable: row.get(2)?,
+        })
+    })?;
+    let groups: Vec<TagGroup> = rows.collect::<Result<Vec<_>>>()?;
+    Ok(groups)
+}
+
+pub fn get_tags_v2(conn: &Connection) -> Result<Vec<Tag>> {
+    let mut stmt = conn.prepare("SELECT id, name, group_id FROM tags ORDER BY name ASC")?;
+    let rows = stmt.query_map([], |row| {
+        Ok(Tag {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            group_id: row.get(2)?,
+        })
+    })?;
+    let tags: Vec<Tag> = rows.collect::<Result<Vec<_>>>()?;
+    Ok(tags)
+}
+
+pub fn assign_tag_to_group(conn: &Connection, tag_name: &str, group_id: Option<i32>) -> Result<()> {
+    conn.execute(
+        "UPDATE tags SET group_id = ?1 WHERE name = ?2",
+        rusqlite::params![group_id, tag_name],
+    )?;
+    Ok(())
+}
+
 pub fn add_tag_to_image(conn: &Connection, image: &str, tag: &str) -> Result<()> {
     conn.execute(
         "INSERT INTO image_tags (image_id, tag_id) values
@@ -163,6 +269,18 @@ pub fn remove_tag_from_image(conn: &Connection, image: &str, tag: &str) -> Resul
 
 pub fn get_tags(conn: &Connection) -> Result<Vec<String>> {
     let mut stmt = conn.prepare("SELECT name FROM tags ORDER BY name ASC")?;
+    let mut rows = stmt.query_map([], |row| row.get(0))?;
+    let tags: Vec<String> = rows.by_ref().flatten().collect();
+    Ok(tags)
+}
+
+pub fn get_auto_taggable_tags(conn: &Connection) -> Result<Vec<String>> {
+    let mut stmt = conn.prepare(
+        "SELECT t.name FROM tags t 
+         LEFT JOIN tag_groups tg ON t.group_id = tg.id 
+         WHERE t.group_id IS NULL OR tg.is_auto_taggable = 1 
+         ORDER BY t.name ASC"
+    )?;
     let mut rows = stmt.query_map([], |row| row.get(0))?;
     let tags: Vec<String> = rows.by_ref().flatten().collect();
     Ok(tags)

@@ -48,5 +48,6 @@
     flex-direction: column;
     gap: 0.5rem;
     margin: 0.5rem 15%;
+    color: black;
   }
 </style>

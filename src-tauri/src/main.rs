@@ -1,19 +1,77 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::path::PathBuf;
 mod database;
 mod parameters;
 mod server;
+mod clip;
 
-use database::get_image_tags;
 use tauri::{AppHandle, Manager};
 use std::sync::Arc;
+use std::path::{Path, PathBuf};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+async fn clip_auto_tag(app_handle: AppHandle, images: Vec<String>, threshold: f32) -> Result<(), String> {
+    let state = app_handle.state::<Arc<database::AppState>>();
+    
+    // 1. Get all auto-taggable tags
+    let tags = app_handle.db(|db| database::get_auto_taggable_tags(db).map_err(|e| e.to_string()))?;
+    if tags.is_empty() {
+        println!("No auto-taggable tags found in database.");
+        return Ok(());
+    }
+
+    // 2. Load CLIP model
+    let clip_guard = state.clip.get_or_init().map_err(|e| e.to_string())?;
+    let clip = clip_guard.as_ref().unwrap();
+
+    // 3. Compute tag embeddings
+    println!("Computing embeddings for {} tags", tags.len());
+    let tag_embeddings = clip.get_text_embeddings(&tags).map_err(|e| e.to_string())?;
+
+    // 4. For each image, compute embedding and find matches
+    let total = images.len();
+    for (idx, image_path) in images.iter().enumerate() {
+        println!("[{}/{}] Processing CLIP for: {}", idx + 1, total, image_path);
+        let path = Path::new(image_path);
+        if !path.exists() {
+            eprintln!("File not found: {}", image_path);
+            continue;
+        }
+
+        let image_embedding = match clip.get_image_embeddings(path) {
+            Ok(e) => e,
+            Err(err) => {
+                eprintln!("Error getting image embeddings for {}: {}", image_path, err);
+                continue;
+            }
+        };
+
+        // Similarity = dot product (since they are normalized)
+        let similarities = image_embedding.matmul(&tag_embeddings.t().map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?
+            .to_vec2::<f32>().map_err(|e| e.to_string())?[0].clone();
+
+        let mut tag_scores: Vec<(&String, f32)> = tags.iter().zip(similarities.iter().copied()).collect();
+        tag_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        for (tag, sim) in tag_scores {
+            println!("  Tag: {} | Similarity: {:.4}", tag, sim);
+            if sim >= threshold {
+                println!("    -> Matched: {} (threshold: {:.4})", tag, threshold);
+                let _ = app_handle.db(|db| database::add_tag_to_image(db, image_path, tag));
+            }
+        }
+    }
+
+    println!("CLIP auto-tagging complete for {} images.", total);
+    Ok(())
 }
 
 #[tauri::command]
@@ -132,14 +190,13 @@ fn auto_tag(
 #[tauri::command]
 fn save_images(app_handle: AppHandle, images: Vec<&str>) -> Result<(), String> {
     println!("Saving images");
-    let length = images.len();
-    images.iter().enumerate().for_each(|(i, x)| {
+    images.iter().for_each(|x| {
         println!("Saving {}", x);
         let params = read_parameters(x);
         // Save in db
         let res = match params {
             Ok(p) => app_handle.db(|db| database::add_image_with_params(db, x, &p)),
-            Err(e) => app_handle.db(|db| database::add_image(db, x)),
+            Err(_) => app_handle.db(|db| database::add_image(db, x)),
         };
         // Match on success/failure
         match res {
@@ -176,7 +233,51 @@ fn create_tag(app: tauri::AppHandle, tag: &str) -> Result<(), String> {
     Ok(image)
 }
 
+#[tauri::command]
+fn create_tag_group(app: tauri::AppHandle, name: &str, is_auto_taggable: bool) -> Result<(), String> {
+    println!("Creating tag group: {} (auto-taggable: {})", name, is_auto_taggable);
+    app.db(|db| database::create_tag_group(db, name, is_auto_taggable))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_tag_groups(app: tauri::AppHandle) -> Result<Vec<database::TagGroup>, String> {
+    println!("Fetching tag groups");
+    app.db(|db| database::get_tag_groups(db))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_tags_v2(app: tauri::AppHandle) -> Result<Vec<database::Tag>, String> {
+    println!("Fetching all tags (v2)");
+    app.db(|db| database::get_tags_v2(db))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn create_tag_with_group(app: tauri::AppHandle, name: &str, group_id: i32) -> Result<(), String> {
+    println!("Creating tag: {} in group id: {}", name, group_id);
+    app.db(|db| database::create_tag_with_group(db, name, group_id))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn assign_tag_to_group(app: tauri::AppHandle, tag_name: &str, group_id: Option<i32>) -> Result<(), String> {
+    println!("Assigning tag: {} to group id: {:?}", tag_name, group_id);
+    app.db(|db| database::assign_tag_to_group(db, tag_name, group_id))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_tag_group_auto_taggable(app: tauri::AppHandle, group_id: i32, is_auto_taggable: bool) -> Result<(), String> {
+    println!("Updating tag group id: {} auto-taggable to: {}", group_id, is_auto_taggable);
+    app.db(|db| database::update_tag_group_auto_taggable(db, group_id, is_auto_taggable))
+        .map_err(|e| e.to_string())
+}
+
 fn main() {
+    env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
+    
     #[cfg(target_os = "linux")]
     unsafe {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
@@ -185,6 +286,7 @@ fn main() {
 
     let app_state = Arc::new(database::AppState {
         db: Default::default(),
+        clip: clip::ClipStore::new(),
     });
 
     let app_state_clone = app_state.clone();
@@ -202,11 +304,18 @@ fn main() {
             get_tags,
             create_tag,
             auto_tag,
+            clip_auto_tag,
             read_tags,
             add_tag_to_image,
             remove_tag_from_image,
             search_with_tags,
             search_with_tags_advanced,
+            create_tag_group,
+            get_tag_groups,
+            get_tags_v2,
+            create_tag_with_group,
+            assign_tag_to_group,
+            update_tag_group_auto_taggable,
         ])
         .setup(move |app| {
             let handle = app.handle();

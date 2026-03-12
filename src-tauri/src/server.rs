@@ -94,6 +94,7 @@ async fn search_with_tags(state: web::Data<Arc<AppState>>, req: web::Json<Search
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct SearchTagsAdvancedRequest {
     positive_tags: Vec<String>,
     negative_tags: Vec<String>,
@@ -188,6 +189,7 @@ async fn save_images(state: web::Data<Arc<AppState>>, req: web::Json<SaveImagesR
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct SearchImagesRequest {
     query_text: String,
 }
@@ -222,6 +224,94 @@ async fn create_tag(state: web::Data<Arc<AppState>>, req: web::Json<CreateTagReq
     let db_lock = state.db.lock().unwrap();
     let db = db_lock.as_ref().unwrap();
     match database::create_tag(db, &req.tag) {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateTagGroupRequest {
+    name: String,
+    is_auto_taggable: bool,
+}
+
+#[post("/create_tag_group")]
+async fn create_tag_group(state: web::Data<Arc<AppState>>, req: web::Json<CreateTagGroupRequest>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+    match database::create_tag_group(db, &req.name, req.is_auto_taggable) {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[get("/get_tag_groups")]
+async fn get_tag_groups(state: web::Data<Arc<AppState>>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+    match database::get_tag_groups(db) {
+        Ok(groups) => HttpResponse::Ok().json(groups),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[get("/get_tags_v2")]
+async fn get_tags_v2(state: web::Data<Arc<AppState>>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+    match database::get_tags_v2(db) {
+        Ok(tags) => HttpResponse::Ok().json(tags),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateTagWithGroupRequest {
+    name: String,
+    group_id: i32,
+}
+
+#[post("/create_tag_with_group")]
+async fn create_tag_with_group(state: web::Data<Arc<AppState>>, req: web::Json<CreateTagWithGroupRequest>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+    match database::create_tag_with_group(db, &req.name, req.group_id) {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AssignTagToGroupRequest {
+    tag_name: String,
+    group_id: Option<i32>,
+}
+
+#[post("/assign_tag_to_group")]
+async fn assign_tag_to_group(state: web::Data<Arc<AppState>>, req: web::Json<AssignTagToGroupRequest>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+    match database::assign_tag_to_group(db, &req.tag_name, req.group_id) {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateTagGroupAutoTaggableRequest {
+    group_id: i32,
+    is_auto_taggable: bool,
+}
+
+#[post("/update_tag_group_auto_taggable")]
+async fn update_tag_group_auto_taggable(state: web::Data<Arc<AppState>>, req: web::Json<UpdateTagGroupAutoTaggableRequest>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+    match database::update_tag_group_auto_taggable(db, req.group_id, req.is_auto_taggable) {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
@@ -278,6 +368,70 @@ async fn get_file(req: actix_web::HttpRequest) -> impl Responder {
     }
 }
 
+#[derive(Deserialize)]
+struct ClipAutoTagRequest {
+    images: Vec<String>,
+    threshold: f32,
+}
+
+#[post("/clip_auto_tag")]
+async fn clip_auto_tag(state: web::Data<Arc<AppState>>, req: web::Json<ClipAutoTagRequest>) -> impl Responder {
+    let db_lock = state.db.lock().unwrap();
+    let db = db_lock.as_ref().unwrap();
+
+    // 1. Get auto-taggable tags
+    let tags = match database::get_auto_taggable_tags(db) {
+        Ok(t) => t,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+    if tags.is_empty() {
+        return HttpResponse::Ok().finish();
+    }
+
+    // 2. Load CLIP model
+    let clip_guard = match state.clip.get_or_init() {
+        Ok(g) => g,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+    let clip = clip_guard.as_ref().unwrap();
+
+    // 3. Compute tag embeddings
+    let tag_embeddings = match clip.get_text_embeddings(&tags) {
+        Ok(e) => e,
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    // 4. For each image, compute embedding and find matches
+    for image_path in &req.images {
+        let path = std::path::Path::new(image_path);
+        if !path.exists() {
+            continue;
+        }
+
+        let image_embedding = match clip.get_image_embeddings(path) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+
+        let similarities = match image_embedding.matmul(&tag_embeddings.t().unwrap()) {
+            Ok(s) => match s.to_vec2::<f32>() {
+                Ok(v) => v[0].clone(),
+                Err(_) => continue,
+            },
+            Err(_) => continue,
+        };
+
+        for (i, &sim) in similarities.iter().enumerate() {
+            if sim >= req.threshold {
+                let tag = &tags[i];
+                let _ = database::add_tag_to_image(db, image_path, tag);
+            }
+        }
+    }
+
+    HttpResponse::Ok().finish()
+}
+
 pub fn create_server(state: Arc<AppState>) -> std::io::Result<actix_web::dev::Server> {
     let state_data = web::Data::new(state);
     
@@ -298,10 +452,17 @@ pub fn create_server(state: Arc<AppState>) -> std::io::Result<actix_web::dev::Se
             .service(search_with_tags)
             .service(search_with_tags_advanced)
             .service(auto_tag)
+            .service(clip_auto_tag)
             .service(save_images)
             .service(search_images)
             .service(get_tags)
             .service(create_tag)
+            .service(create_tag_group)
+            .service(get_tag_groups)
+            .service(get_tags_v2)
+            .service(create_tag_with_group)
+            .service(assign_tag_to_group)
+            .service(update_tag_group_auto_taggable)
             .service(read_dir)
             .service(get_file)
     })
