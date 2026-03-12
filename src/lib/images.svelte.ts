@@ -1,14 +1,16 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readDir, readTextFile } from "@tauri-apps/plugin-fs";
 import type { DirEntry } from "@tauri-apps/plugin-fs";
-import { invoke } from "@tauri-apps/api/core";
 import { path } from "@tauri-apps/api";
 import { join } from "@tauri-apps/api/path";
+import { apiInvoke, convertFileSrc, isTauri, apiReadDir } from "./api";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "mp4", "webm"];
 
 export async function openImageDialogue() {
+  if (!isTauri) {
+    return prompt("Enter image path:");
+  }
   const file = (await open({
     multiple: false,
     filters: [
@@ -28,6 +30,9 @@ async function openImageFile(fileName: string) {
 }
 
 async function openDirectory() {
+  if (!isTauri) {
+    return prompt("Enter directory path:");
+  }
   const directory: string = (await open({
     defaultPath: "~/pictures",
     multiple: false,
@@ -38,16 +43,14 @@ async function openDirectory() {
 }
 
 async function readDirImages(dirPath: string) {
-  const entries: DirEntry[] = await readDir(dirPath);
-  // console.log(`Read entries from ${dirPath}`, entries);
+  const entries: any[] = isTauri ? await readDir(dirPath) : await apiReadDir(dirPath);
   return (await processEntries(dirPath, entries))
     .filter((entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
     .reverse();
 }
 
 async function readDirImagesRecursive(dirPath: string) {
-  const entries: DirEntry[] = await readDir(dirPath);
-  // console.log(`Read entries from ${dirPath}`, entries);
+  const entries: any[] = isTauri ? await readDir(dirPath) : await apiReadDir(dirPath);
   return (await processEntriesRecursively(dirPath, entries))
     .filter((entry) => IMAGE_EXTENSIONS.some((ext) => entry.name.endsWith(ext)))
     .reverse();
@@ -55,7 +58,7 @@ async function readDirImagesRecursive(dirPath: string) {
 
 export async function readParameters(src: string) {
   try {
-    return await invoke<string>("read_parameters", { src });
+    return await apiInvoke<string>("read_parameters", { src });
   } catch (e) {
     console.log("Error reading parameters: ", e);
   }
@@ -63,7 +66,7 @@ export async function readParameters(src: string) {
 
 export async function readTags(src: string) {
   try {
-    return await invoke<Array<string>>("read_tags", { src });
+    return await apiInvoke<Array<string>>("read_tags", { src });
   } catch (e) {
     console.log("Error reading tags: ", e);
   }
@@ -71,39 +74,39 @@ export async function readTags(src: string) {
 
 async function saveImages(images: string[]) {
   try {
-    return await invoke<string>("save_images", { images });
+    return await apiInvoke<string>("save_images", { images });
   } catch (e) {
     console.log("Error saving images: ", e);
   }
 }
 
 function searchImages(queryText: string) {
-  return invoke<string[]>("search_images", { queryText });
+  return apiInvoke<string[]>("search_images", { query_text: queryText });
 }
 
 function searchImagesWithTags(tags: string[]) {
-  return invoke<string[]>("search_with_tags", { tags });
+  return apiInvoke<string[]>("search_with_tags", { tags });
 }
 
 function searchImagesWithTagsAdvanced(
   positiveTags: string[],
   negativeTags: string[]
 ) {
-  return invoke<string[]>("search_with_tags_advanced", {
-    positiveTags,
-    negativeTags,
+  return apiInvoke<string[]>("search_with_tags_advanced", {
+    positive_tags: positiveTags,
+    negative_tags: negativeTags,
   });
 }
 
 async function processEntriesRecursively(
   parent: string,
-  entries: DirEntry[]
+  entries: any[]
 ): Promise<ImageInfo[]> {
   const fileEntryPromises = entries.map(async (entry) => {
-    const entryPath = await join(parent, entry.name);
+    const entryPath = entry.path;
 
-    if (entry.isDirectory) {
-      const subDirEntries = await readDir(entryPath);
+    if (entry.isDirectory || entry.is_directory) {
+      const subDirEntries: any[] = isTauri ? await readDir(entryPath) : await apiReadDir(entryPath);
       return await processEntriesRecursively(entryPath, subDirEntries);
     } else {
       return [
@@ -121,16 +124,16 @@ async function processEntriesRecursively(
   return nestedResults.flat();
 }
 
-async function processEntries(parent: string, entries: DirEntry[]) {
+async function processEntries(parent: string, entries: any[]) {
   return Promise.all(
     entries
-      .filter((e) => e.isFile)
+      .filter((e) => e.isFile || e.is_file)
       .map(async (entry) => {
-        const path = await join(parent, entry.name);
+        const entryPath = entry.path;
         return {
           name: entry.name,
-          path,
-          src: convertFileSrc(path),
+          path: entryPath,
+          src: convertFileSrc(entryPath),
         };
       })
   );
@@ -195,9 +198,13 @@ class ImageStoreClass implements ImageStore {
     const filePath = await openImageDialogue();
     console.log("Selected file:", filePath);
     if (filePath) {
+        let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
+        if (isTauri) {
+            name = await path.basename(filePath);
+        }
       this.images = [
         {
-          name: await path.basename(filePath),
+          name,
           path: filePath,
           src: await openImageFile(filePath),
         },
@@ -218,7 +225,6 @@ class ImageStoreClass implements ImageStore {
         }))
       );
       console.log("Mapped images:", mappedImages);
-      console.log(this);
       this.images = [...mappedImages];
     }
   };
@@ -248,8 +254,12 @@ class ImageStoreClass implements ImageStore {
       (
         await searchImages(queryText)
       ).map(async (filePath) => {
+        let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
+        if (isTauri) {
+            name = await path.basename(filePath);
+        }
         return {
-          name: await path.basename(filePath),
+          name,
           path: filePath,
           src: await openImageFile(filePath),
         };
@@ -263,8 +273,12 @@ class ImageStoreClass implements ImageStore {
       (
         await searchImagesWithTags(tags)
       ).map(async (filePath) => {
+        let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
+        if (isTauri) {
+            name = await path.basename(filePath);
+        }
         return {
-          name: await path.basename(filePath),
+          name,
           path: filePath,
           src: await openImageFile(filePath),
         };
@@ -281,8 +295,12 @@ class ImageStoreClass implements ImageStore {
       (
         await searchImagesWithTagsAdvanced(positiveTags, negativeTags)
       ).map(async (filePath) => {
+        let name = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
+        if (isTauri) {
+            name = await path.basename(filePath);
+        }
         return {
-          name: await path.basename(filePath),
+          name,
           path: filePath,
           src: await openImageFile(filePath),
         };
@@ -292,6 +310,10 @@ class ImageStoreClass implements ImageStore {
   };
 
   openREFile = async () => {
+    if (!isTauri) {
+        alert("Not supported in browser yet (needs backend endpoint for file reading)");
+        return;
+    }
     const file = await open({
       multiple: false,
       filters: [

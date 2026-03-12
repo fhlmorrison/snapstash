@@ -1,11 +1,11 @@
-import { invoke } from "@tauri-apps/api/core";
+import { apiInvoke, apiGet } from "./api";
 
 async function createTag(tag: string) {
-  return await invoke<string[]>("create_tag", { tag });
+  return await apiInvoke<string[]>("create_tag", { tag });
 }
 
 async function getTags() {
-  return await invoke<string[]>("get_tags");
+  return await apiGet<string[]>("get_tags");
 }
 
 /**
@@ -16,7 +16,7 @@ async function getTags() {
  */
 async function autoTag(tag: string, images: string[], strict = true) {
   try {
-    return await invoke<null>("auto_tag", { tag, images, strict });
+    return await apiInvoke<null>("auto_tag", { tag, images, strict });
   } catch (e) {
     console.log("Error auto tagging: ", e);
   }
@@ -33,11 +33,11 @@ async function tagAllImages(tag: string, images: string[]) {
 }
 
 export async function tagImage(image: string, tag: string) {
-  return await invoke<void>("add_tag_to_image", { image, tag });
+  return await apiInvoke<void>("add_tag_to_image", { image, tag });
 }
 
 export async function removeTagFromImage(image: string, tag: string) {
-  return await invoke<void>("remove_tag_from_image", { image, tag });
+  return await apiInvoke<void>("remove_tag_from_image", { image, tag });
 }
 
 interface TagStore {

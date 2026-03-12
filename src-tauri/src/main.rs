@@ -4,9 +4,11 @@
 use std::path::PathBuf;
 mod database;
 mod parameters;
+mod server;
 
 use database::get_image_tags;
 use tauri::{AppHandle, Manager};
+use std::sync::Arc;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -181,13 +183,17 @@ fn main() {
         std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
     }
 
+    let app_state = Arc::new(database::AppState {
+        db: Default::default(),
+    });
+
+    let app_state_clone = app_state.clone();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .manage(database::AppState {
-            db: Default::default(),
-        })
+        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             greet,
             read_parameters,
@@ -202,12 +208,24 @@ fn main() {
             search_with_tags,
             search_with_tags_advanced,
         ])
-        .setup(|app| {
+        .setup(move |app| {
             let handle = app.handle();
 
-            let app_state: tauri::State<database::AppState> = handle.state();
+            let app_state: tauri::State<Arc<database::AppState>> = handle.state();
             let db = database::init_db(&handle).expect("failed to open database");
             *app_state.db.lock().unwrap() = Some(db);
+
+            // Start Actix server
+            tauri::async_runtime::spawn(async move {
+                match server::create_server(app_state_clone) {
+                    Ok(server) => {
+                        if let Err(e) = server.await {
+                            eprintln!("Actix server error: {}", e);
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to create Actix server: {}", e),
+                }
+            });
 
             Ok(())
         })
@@ -226,7 +244,7 @@ impl DatabaseAccess for tauri::AppHandle {
     where
         F: FnOnce(&rusqlite::Connection) -> T,
     {
-        let state = self.state::<database::AppState>();
+        let state = self.state::<Arc<database::AppState>>();
         let db_guard = state.db.lock().unwrap();
         let db = db_guard.as_ref().unwrap();
         operation(db)
